@@ -1,0 +1,2 @@
+class MathTopic:
+    pass
