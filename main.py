@@ -14,6 +14,9 @@ from model import enums
 #notification cbks
 def onTextToSendToTexstudio(sender,notification_name,txtToSend):
     print("received {}".format(txtToSend))
+    app.logger.debug(txtToSend)
+    time.sleep(3)
+    keyboard.type(txtToSend)
 
 app = Flask(__name__)
 # app.secret_key = "1dhsjhjsdkbsjahsj" # se volessi usare le sessioni....
@@ -36,8 +39,5 @@ def new_text():
     doc = nlp(last_burst)
     for token in doc:
         notificationCenter.post_notification(sender=None,with_name="new_input",with_info=token.text)
-    toSay = '{}'.format(request.json['text'].lower().strip()) 
-    app.logger.debug(toSay)
-    keyboard.type(toSay)
     return '',status.HTTP_200_OK
     

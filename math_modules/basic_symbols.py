@@ -5,9 +5,6 @@ from model.enums import NODE_TYPE
 class Per(MathTopic):
     def __init__(self):
         super().__init__()
-        #init a vuote variabili che andranno a comporre lo string.format
-        self._symbol = ""
-        self._format = "{}".format(self._symbol)
         self._g = self.createGrammar()
         self._buffer = [] #tiene conto delle parole dette fino a che una regola non è stata metchata completamente
 
@@ -24,6 +21,11 @@ class Per(MathTopic):
 
         return g
     
+    @staticmethod 
+    def createLatexText(symbol):
+        return '{}'.format(symbol)
+
+    
     def onInput(self,sender,notification_name,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token
         print("notification info {}".format(last_token))
         self._buffer.append(last_token)
@@ -33,15 +35,10 @@ class Per(MathTopic):
             for matched_rule in matched_rules:
                 matched_rule.disable() #disabilitandola è come se la marcassi come visitata
                 tags.append([tag for tag in matched_rule.matched_tags if len(matched_rule.matched_tags)>0])
-        #controllo che i tag trovati siano tutti uguali
+        #controllo che i tag trovati siano tutti uguali, altrimenti non notifico, ma aggiorno solo lo stato
         if(checkAllArrayElementsEquals(tags) and len(tags)>0):
-            self.sendLatexText(tags[0])
-
-        # matched_rules = self._g.find_matching_rules(last_token)
-        # for matched_rule in matched_rules:
-        #     print('Public rule tags: {}'.format(matched_rule.type))
-        #     matched_rule.disable() #disabilitandola è come se la marcassi come visitata
-        #     print("expansions matched tags: {}".format(matched_rule.matched_tags))
+            tags = [tag for lst in tags for tag in lst] #flatten
+            self.sendLatexText(self.createLatexText(tags[0]))
 
 
 def checkAllArrayElementsEquals(lst):
