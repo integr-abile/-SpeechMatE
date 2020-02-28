@@ -1,10 +1,12 @@
 from math_modules.base_module import MathTopic
 from jsgf import PublicRule, Literal, Grammar, AlternativeSet
 from model.enums import NODE_TYPE
+import os
 
 class Per(MathTopic):
     def __init__(self):
         super().__init__()
+        self._name = os.path.basename(__file__)
         self._g = self.createGrammar()
         self._buffer = [] #tiene conto delle parole dette fino a che una regola non è stata metchata completamente
 
@@ -26,9 +28,9 @@ class Per(MathTopic):
         return '{}'.format(symbol)
 
     
-    def onInput(self,sender,notification_name,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token
+    def onInput(self,sender,notification_name,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token col suo POS
         print("notification info {}".format(last_token))
-        self._buffer.append(last_token)
+        self._buffer.append(last_token[0]) #[0] è il testo
         tags = []
         for i in range(1,len(self._buffer)):
             matched_rules = self._g.find_matching_rules(' '.join(self._buffer[-i:])) #qua creo ad ogni iterazione stringhe sempre più lunghe
@@ -43,4 +45,10 @@ class Per(MathTopic):
 
 def checkAllArrayElementsEquals(lst):
     return lst[1:] == lst[:-1]
+
+#funzione generatrice. Si chiamerà così in tutti i moduli per convenzione
+def generateGrammars():
+    grammars = [Per()] #e a seguire nell'array creo un'istanza per classe nel modulo
+    return grammars
+
 
