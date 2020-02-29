@@ -8,11 +8,15 @@ class NODE_TYPE(Enum):
     INTERNO = 0
     FOGLIA = 1
 
-class NotificationName(Enum):
-    NEW_INPUT = 0
-    NEW_INPUT_FROM_LAYER = 1
-    NEW_LAYER_REQUEST = 2
-    TXT_FOR_TEXSTUDIO_FOR_LAYER = 3
-    TXT_FOR_TEXSTUDIO_FOR_SRV = 4
-    WAIT = 5
-    END_LAYER = 6
+class LayerMsg(Enum):
+    NEW_LAYER_REQUEST = 0 #forward da ModuleMsg
+    END_THIS_LAYER = 1
+    END_THIS_LAYER_WITH_TEXT = 2 #quando hanno dato tutti una risposta e sono tutti foglie
+    TEXT = 3
+    WAIT = 4 #quando uno o più moduli gli hanno risposto Wait
+
+class ModuleMsg(Enum):
+    TEXT = 0
+    NEW_LAYER_REQUEST = 1
+    WAIT = 2
+    
