@@ -17,7 +17,7 @@ class Layer:
         if text_pos[0] == 'fine':
             if len(self._leafRuleMatched) > 0: #se ho metchato delle foglie nel frattempo
                 farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
-                return (LayerMsg.END_THIS_LAYER_WITH_TEXT,farthest_leaf) #farthest_leaf dict {'tag':'...','idx':3}
+                return (LayerMsg.END_THIS_LAYER_WITH_TEXT,farthest_leaf) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
             else: #nessuna regola foglia è stata finora metchata
                 return (LayerMsg.END_THIS_LAYER,None)
 
@@ -36,7 +36,7 @@ class Layer:
                     self._leafRuleMatched.append({'tag':msg[1],'idx':idx})
             answers.append(msg)
         
-        print(answers)
+        # print(answers)
         if all([elem[0] != ModuleMsg.NEW_LAYER_REQUEST for elem in answers]): #se non c'è nessuna richiesta di nuovo layer in nessuna delle regole metchate
             if all([elem[0] != ModuleMsg.WAIT for elem in answers]): #se c'è coerenza tra le regole metchate in ogni modulo:
                 if all(elem[0] == ModuleMsg.NO_MATCH for elem in answers): #se non è stata metchata nessuna regola
@@ -46,7 +46,7 @@ class Layer:
                     candidate_transcription = list(map(lambda answer:answer[1],answers))
                     print('candidate transcriptions: {}'.format(candidate_transcription))
                     if checkAllArrayElementsEquals(candidate_transcription): #se anche tra moduli c'è coerenza in merito a cosa trascrivere
-                        if all([elem[2]['leaf'] == True for elem in answers]):
+                        if all([elem[2]['leaf'] == True for elem in answers]): #se tutte le risposte arrivano da foglie allora non esiste più nessuna regola triggerabile quindi finisco il layer
                             return (LayerMsg.END_THIS_LAYER_WITH_TEXT,candidate_transcription[0])
                         else:
                             return (LayerMsg.TEXT,candidate_transcription[0])
@@ -60,7 +60,7 @@ class Layer:
             allTriggerWords = [triggerWord for triggerWords in allTriggerWords for triggerWord in triggerWords] #flatten
             return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords)
             
-        return (LayerMsg.TEXT,"wow")
+        return (LayerMsg.TEXT,"shouldn't happened")
 
     
     def __init__(self):

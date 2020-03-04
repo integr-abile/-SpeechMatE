@@ -8,7 +8,7 @@ from util.util import checkAllArrayElementsEquals
 class Per(MathTopic):
     def __init__(self,answerPoolSetter):
         super().__init__(answerPoolSetter)
-        self._name = os.path.basename(__file__)
+        self._name = Per.get_classname()
         self._g = self.createGrammar()
         self._buffer = [] #tiene conto delle parole dette fino a che una e una sola regola non è stata metchata completamente
         self._matched_leafs_tag = [] #tiene conto delle foglie che sono state metchate, ma non inoltrate a causa di regole in conflitto per cui è stata necessaria una wait
@@ -29,6 +29,10 @@ class Per(MathTopic):
         g.add_rule(multiplication_rule)
 
         return g
+    
+    @classmethod
+    def get_classname(cls):
+        return cls.__name__
     
     @staticmethod 
     def createLatexText(symbol):
