@@ -3,6 +3,7 @@ from enum import Enum
 class Action(Enum):
     NESSUNA = 0
     DETTATURA = 1
+    EDITING = 2
 
 class NODE_TYPE(Enum):
     INTERNO = 0
@@ -19,5 +20,8 @@ class ModuleMsg(Enum):
     TEXT = 0 #una regola metchata o più regole metchate che però scriverebbero la stessa cosa
     NEW_LAYER_REQUEST = 1 #se una regola richiede un nuovo layer, questa ha la priorità su ogni altro match
     WAIT = 2 #più regole metchate contrastanti
-    NO_MATCH = 3 #nessuna regola metchata a questo giro
+    NO_MATCH = 3 #nessuna regola metchata a questo giro, ma potrei metcharla in un momento successivo
+    #nessuna regola può più essere o perchè tutte disabilitate o perchè il processamento del burst è arrivato a un punto tale che se nessuna regola si è attivata, 
+    #non si potrà attivare più, per esempio perchè tutte le regole entry point hanno un'attivazione di un numero <= di parole di quelle finora processate
+    OUT_OF_PLAY = 4 
     

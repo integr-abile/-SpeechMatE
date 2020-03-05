@@ -10,6 +10,8 @@ from collections import deque #è una coda iterabile che può fare anche da stac
 from model import enums
 from model.layer import Layer
 from model.enums import LayerMsg
+from model.enums import Action
+import pdb
 
 app = Flask(__name__)
 CORS(app) #di default CORS *
@@ -19,7 +21,7 @@ keyboard = Controller()
 #app state
 stack = deque()
 curBurst = [] #il burst attuale sottoforma di array di token
-lastAction = enums.Action.NESSUNA
+lastAction = Action.NESSUNA #si riferisce alle azioni fatte nei confronti di texstudio
 prevLayerTriggerWords = [] #per ogni token controlla che quel token non appartenga a queste parole, se no vuol dire che il top layer deve terminare e l'n-1 layer deve passare di stato
 lastTextSent = "" #tiene conto dell'ultimo testo inviato a texstudio e sulla base di questo valuta se fare replace o scrivere di seguito
 
@@ -47,20 +49,32 @@ def manageLayerAnswer(layerAnswer):
                 app.logger.debug('txt for texstudio: {}'.format(txtToSend))
             keyboard.type(freeText)
             app.logger.debug('txt for texstudio as plain text: {}'.format(freeText))
+            """Aggiornamento stato"""
+            lastTextSent = freeText
+            lastAction = Action.DETTATURA
         else: #il messaggio di fine layer arriva con un testo semplice come payload
             txtToSend = layerAnswer[1]
+            # pdb.set_trace()
             if isReplaceNeeded(txtToSend):
                 keyboard.type('__rpl{}&'.format(txtToSend))
                 app.logger.debug('txt for texstudio: {}'.format('__rpl{}&'.format(txtToSend)))
             else:
                 keyboard.type(txtToSend)
                 app.logger.debug('txt for texstudio: {}'.format(txtToSend))
+            """Aggiornamento stato"""
+            lastTextSent = txtToSend
+            lastAction = Action.DETTATURA
+        stack.pop() #fine layer
+    elif layerAnswer[0] == LayerMsg.NEW_LAYER_REQUEST:
+        prevLayerTriggerWords = [1] #aggiorno le parole per risollevare il layer che sto portando in secondo posto
+        stack.append(Layer())
 
 def isReplaceNeeded(newText):
     """
     Considerando anche l'ultimo testo inviato a texstudio, valuta se il nuovo testo arrivato è assimilabile ad una specificazione del precedente
     o a un nuovo comando/testo
     """
+    print('testo da controllare per il replacement {}'.format(newText))
     if newText == "":
         return True
     if newText[0] == '\\': #è un comando latex
@@ -79,21 +93,24 @@ def isReplaceNeeded(newText):
         return False
 
 
-"""SERVER INTERFACE PART"""
+"""SERVER INTERFACE API"""
 
 @app.route('/mathtext',methods=['POST'])
 def new_text():
     last_burst = request.json['text']
+    doc = nlp(last_burst)
+    num_burst_tokens = len(doc)
+
     if len(stack) == 0:
         stack.append(Layer())
-    doc = nlp(last_burst)
+    
     for idx,token in enumerate(doc):
         curBurst.append(token.text)
         if token.text in prevLayerTriggerWords: #se questo token fa sì di triggerare il layer precedente
             pass
             #rimuovere layer in cima e inoltare quel comando al nuovo top layer (che poi è il precedente)
         else:
-            res = stack[-1].handleRawText((token.text,token.pos_),idx)
+            res = stack[-1].handleRawText((token.text,token.pos_),idx,num_burst_tokens)
             time.sleep(3) #per debug. Per darmi tempo di switchare su texstudio
             manageLayerAnswer(res)
     return '',status.HTTP_200_OK
