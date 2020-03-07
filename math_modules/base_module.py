@@ -3,6 +3,7 @@ from model.enums import ModuleMsg
 from typing import Callable
 from util.util import checkAllArrayElementsEquals
 from model.enums import NODE_TYPE
+import pdb
 
 
 class MathTopic:
@@ -12,18 +13,20 @@ class MathTopic:
         self._g = None
         self._buffer = [] #tiene conto delle parole dette fino a che una e una sola regola non è stata metchata completamente
         self._outOfPlayFlag = False #tiene conto se in questo modulo esiste ancora la possibilità che una delle regole possa venire ancora metchata
-        self._moduleName = module_name
+        self.moduleName = module_name
         self._numMaxEntryRulesTokens = num_max_entry_rules_tokens #dipendente dalla grammatica
 
-    def sendLatexText(self,text,node_type_info={'leaf':False}):
+#------------------SENDING MESSAGE TO LAYER------------------------------
+#tutti i text indice 1, tutti next_rules_words indice 2, tutti grammar_name indice 3
+    def sendLatexText(self,text,node_type_info={'leaf':False},next_rules_words={'next_rules_words':[]}):
         """node_type_info è un dizionario {'leaf':bool} (di default leaf:False) che specifica se la regola triggerata è una foglia oppure no"""
-        self._answerPoolSetter((ModuleMsg.TEXT,text,node_type_info))
+        self._answerPoolSetter((ModuleMsg.TEXT,text,next_rules_words,self.moduleName,node_type_info))
 
-    def postNewLayerRequest(self,unlock_node_words={'layer_unlock_words':[]}):
-        self._answerPoolSetter((ModuleMsg.NEW_LAYER_REQUEST,None,unlock_node_words))
+    def postNewLayerRequest(self,rulenameRequestingNewLayer,cursorOffset,next_rules_words={'next_rules_words':[]}):
+        self._answerPoolSetter((ModuleMsg.NEW_LAYER_REQUEST,None,next_rules_words,self.moduleName,rulenameRequestingNewLayer,cursorOffset)) 
     
-    def sendWaitRequest(self):
-        self._answerPoolSetter((ModuleMsg.WAIT,None,None))
+    def sendWaitRequest(self,next_rules_words={'next_rules_words':[]}):
+        self._answerPoolSetter((ModuleMsg.WAIT,None,next_rules_words,self.moduleName))
     
     def sendNoMatchNotification(self):
         self._answerPoolSetter((ModuleMsg.NO_MATCH,None,None))
@@ -31,46 +34,61 @@ class MathTopic:
     def sendMyselfDisableNotification(self):
         self._answerPoolSetter((ModuleMsg.OUT_OF_PLAY,None,None))
 
-    @staticmethod 
-    def createLatexText(symbol):
+#------------------------------TO OVERRIDE-----------------------------------
+ 
+    def createLatexText(self,text,rule_name=None): #must override
         return None
+
+    def getCursorOffsetForRulename(self,rulename): #override se non stiamo parlando di una foglia
+        return 0
+
+#-----------------------------------------------------------------------
 
     def getLatexAlternatives(self,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token col suo POS
 
         if self._outOfPlayFlag:
-            print('{} è fuori dal gioco'.format(self._moduleName))
+            print('{} è fuori dal gioco'.format(self.moduleName))
             self.sendMyselfDisableNotification()
             return
 
         print("MODULE: input info {}".format(last_token))
         self._buffer.append(last_token[0]) #[0] è il testo, [1] il POS
+        """Init response variables"""
         tags = []
         node_types = [] #tiene conto dei tipi delle regole metchate (e quindi anche di quate regole sono state metchate)
-        unlock_layer_words = [] #tiene conto delle parole successive per triggerare nuove regole (utile nel caso di richiesta di nuovi layer)
+        next_rules_words = [] #tiene conto delle parole successive per triggerare nuove regole (utile nel caso di richiesta di nuovi layer)
+        rulenameRequestingNewLayer = None #servirà per il calcolo dell'offset del cursore
+
         for i in range(1,len(self._buffer)+1): #+1 perchè andrò indietro con gli indici
             matched_rules = self._g.find_matching_rules(' '.join(self._buffer[-i:])) #qua creo ad ogni iterazione stringhe sempre più lunghe partendo dal fondo
             print("matching rules: {}".format(matched_rules))
-            for matched_rule in matched_rules:
+            # pdb.set_trace()
+            for matched_rule in matched_rules: #per ogni regola metchata
                 matched_rule.disable() #disabilitandola è come se la marcassi come visitata e il sistema non la metcha più
                 tags.append([tag for tag in matched_rule.matched_tags if len(matched_rule.matched_tags)>0])
                 node_types.append(matched_rule.node_type)
+                [next_rules_words.append(trigger_word) for trigger_word in matched_rule.next_rules_trigger_words]
                 if matched_rule.request_new_layer:
-                    [unlock_layer_words.append(trigger_word) for trigger_word in matched_rule.next_rules_trigger_words]
-
+                    rulenameRequestingNewLayer = matched_rule.name
+                    
         tags = [tag for lst in tags for tag in lst] #flatten
-        if len(unlock_layer_words) > 0: #se almeno una delle regole ha richiesto un nuovo layer, questa deve avere la priorità (si tratta anche di fare bene la grammatica)
-            self.postNewLayerRequest({'layer_unlock_words':unlock_layer_words})
+        next_rules_words = [word for listOfWords in next_rules_words for word in listOfWords] #flatten.
+
+        if rulenameRequestingNewLayer is not None: #se almeno una delle regole ha richiesto un nuovo layer, questa deve avere la priorità (si tratta anche di fare bene la grammatica)
+            #trovo di quanto devo muovere il cursore rispetto a dov'è attualmente
+            curOffset = self.getCursorOffsetForRulename(rulenameRequestingNewLayer)
+            self.postNewLayerRequest(rulenameRequestingNewLayer,curOffset,{'next_rules_words':next_rules_words})
         elif checkAllArrayElementsEquals(tags) and len(tags)>0: #se tutte le regole qua sono d'accordo su cosa scrivere in latex
             areAllMatchedRulesInternal = all(node_type == NODE_TYPE.INTERNO for node_type in node_types)
-            self.sendLatexText(self.createLatexText(tags[0]),{'leaf':not areAllMatchedRulesInternal}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
+            self.sendLatexText(self.createLatexText(tags[0]),{'leaf':not areAllMatchedRulesInternal},{'next_rules_words':next_rules_words}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
         elif len(node_types) == 0: #nessuna regola è stata metchata
             if len(self._buffer) >= self._numMaxEntryRulesTokens: #se non ho metchato niente adesso, non posso pensare che potrò metchare
                 self.sendMyselfDisableNotification()
                 self._outOfPlayFlag = True
-            else: #se invece potrei ancora metchare qualcosa con i prossimi token. Sviluppo futuro potrebbe essere fare un'analisi linguistica delle parole di attivazione delle regole e non solo del conteggio
+            else: #se invece potrei ancora metchare qualcosa con i prossimi token.
                 self.sendNoMatchNotification()
         else:
-            self.sendWaitRequest()
+            self.sendWaitRequest({'next_rules_words':next_rules_words})
         
 
     
