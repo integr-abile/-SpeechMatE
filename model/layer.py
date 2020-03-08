@@ -36,6 +36,7 @@ class Layer:
         """Chiamata token per token e token per token deve rispondere. idx è l'indice di quel token nel burst"""
         print("LAYER: ricevuto input dal server {}".format(text_pos))
 
+    #------------------------ CONTROLLI PRELIMINARI ---------------------------------------------
         if text_pos[0] == 'fine':
             if len(self._leafRuleMatched) > 0: #se ho metchato delle foglie nel frattempo
                 farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
@@ -45,17 +46,22 @@ class Layer:
             else: #nessuna regola foglia è stata finora metchata
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER
                 return (LayerMsg.END_THIS_LAYER,None)
+    
+        #controllo parole di trigger, altrimenti redirect back come TEXT al server
+        allPotentialGrammars = []
+        if text_pos[0] not in self.nextWordsDictToList():
+            #redirect back
+            self._lastMsgTypeSent = LayerMsg.TEXT
+            return (LayerMsg.TEXT,text_pos[0])
 
-        #TODO: controllo parole di trigger, altrimenti redirect back come TEXT al server
-
-#-------------------------- MATCHING RULES ------------------------------------------
+    #-------------------------- MATCHING RULES ------------------------------------------
         
         #inoltro ai moduli con la creazione dei thread e rispondo solo quando hanno finito tutti (ThreadPoolExecutor). Ognuno popola la struttura dati condivisa
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self._allGrammars)) as executor:
             for grammar in self._allGrammars:
                 executor.submit(grammar.getLatexAlternatives,text_pos)
 
-#---------------------------------------- MANAGE MODULES ANSWERS ---------------------------------------------------------
+    #---------------------------------------- MANAGE MODULES ANSWERS ---------------------------------------------------------
         #guardo la struttura dati condivisa per fare le mie valutazioni
         print("LAYER: ora che HANNO FINITO TUTTI I THREAD guardo cosa mi hanno risposto")
         answers = []
@@ -78,6 +84,7 @@ class Layer:
                     relevant_answers = list(filter(lambda answer:answer[0]!=ModuleMsg.OUT_OF_PLAY,answers)) #filtro solo le risposte dei moduli CHE HANNO ANCORA DA DIRMI QUALCOSA
                     candidate_transcription = list(map(lambda answer:answer[1],relevant_answers)) #estraggo solo il contributo latex di ognuna (TEXT e NO_MATCH)
                     print('candidate transcriptions: {}'.format(candidate_transcription))
+                    # pdb.set_trace()
                     if checkAllArrayElementsEquals(candidate_transcription): #se anche tra moduli c'è coerenza in merito a cosa trascrivere
                         if all(elem[1]==None for elem in relevant_answers): #se tutti i moduli mi stanno dicendo che non hanno metchato niente o sono con testi vuoti, ma comunque non sono out-of-play
                             for answer in relevant_answers:
@@ -174,6 +181,14 @@ class Layer:
                 for grammar_rule in grammar.rules: 
                     if grammar_rule.name == rulename: #rule match
                         grammar.createLatexText(text,grammar_rule.name)
+
+    #-------------------- UTILITY ---------------------------
+    def nextWordsDictToList(self):
+        triggeringWords = []
+        for grammarName in self._allNextRuleWordsDict:
+            triggeringWords += self._allNextRuleWordsDict[grammarName]
+        unique_list = list(set(triggeringWords))
+        return unique_list
 
 
         

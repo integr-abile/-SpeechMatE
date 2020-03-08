@@ -8,13 +8,12 @@ import pdb
 
 class MathTopic:
 
-    def __init__(self,answerPoolSetter,module_name,num_max_entry_rules_tokens):
+    def __init__(self,answerPoolSetter,module_name):
         self._answerPoolSetter = answerPoolSetter
         self._g = None
         self._buffer = [] #tiene conto delle parole dette fino a che una e una sola regola non è stata metchata completamente
         self._outOfPlayFlag = False #tiene conto se in questo modulo esiste ancora la possibilità che una delle regole possa venire ancora metchata
         self.moduleName = module_name
-        self._numMaxEntryRulesTokens = num_max_entry_rules_tokens #dipendente dalla grammatica
 
 #------------------SENDING MESSAGE TO LAYER------------------------------
 #tutti i text indice 1, tutti next_rules_words indice 2, tutti grammar_name indice 3
@@ -29,10 +28,10 @@ class MathTopic:
         self._answerPoolSetter((ModuleMsg.WAIT,None,next_rules_words,self.moduleName))
     
     def sendNoMatchNotification(self):
-        self._answerPoolSetter((ModuleMsg.NO_MATCH,None,None))
+        self._answerPoolSetter((ModuleMsg.NO_MATCH,None,None,self.moduleName))
     
     def sendMyselfDisableNotification(self):
-        self._answerPoolSetter((ModuleMsg.OUT_OF_PLAY,None,None))
+        self._answerPoolSetter((ModuleMsg.OUT_OF_PLAY,None,None,self.moduleName))
 
 #------------------------------TO OVERRIDE-----------------------------------
  
@@ -46,13 +45,20 @@ class MathTopic:
 
     def getLatexAlternatives(self,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token col suo POS
 
+        """CHECK INPUT PRELIMINARE"""
         if self._outOfPlayFlag:
             print('{} è fuori dal gioco'.format(self.moduleName))
             self.sendMyselfDisableNotification()
             return
 
-        print("MODULE: input info {}".format(last_token))
+        print("MODULE {}: input info {}".format(self.moduleName,last_token))
         self._buffer.append(last_token[0]) #[0] è il testo, [1] il POS
+
+        if last_token[0] not in self._nextRulesWords:
+            self._outOfPlayFlag = True
+            self.sendMyselfDisableNotification()
+            return
+
         """Init response variables"""
         tags = []
         node_types = [] #tiene conto dei tipi delle regole metchate (e quindi anche di quate regole sono state metchate)
@@ -73,6 +79,8 @@ class MathTopic:
                     
         tags = [tag for lst in tags for tag in lst] #flatten
         next_rules_words = [word for listOfWords in next_rules_words for word in listOfWords] #flatten.
+        """Aggiorno stato"""
+        self._nextRulesWords = next_rules_words
 
         if rulenameRequestingNewLayer is not None: #se almeno una delle regole ha richiesto un nuovo layer, questa deve avere la priorità (si tratta anche di fare bene la grammatica)
             #trovo di quanto devo muovere il cursore rispetto a dov'è attualmente
@@ -82,11 +90,7 @@ class MathTopic:
             areAllMatchedRulesInternal = all(node_type == NODE_TYPE.INTERNO for node_type in node_types)
             self.sendLatexText(self.createLatexText(tags[0]),{'leaf':not areAllMatchedRulesInternal},{'next_rules_words':next_rules_words}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
         elif len(node_types) == 0: #nessuna regola è stata metchata
-            if len(self._buffer) >= self._numMaxEntryRulesTokens: #se non ho metchato niente adesso, non posso pensare che potrò metchare
-                self.sendMyselfDisableNotification()
-                self._outOfPlayFlag = True
-            else: #se invece potrei ancora metchare qualcosa con i prossimi token.
-                self.sendNoMatchNotification()
+            self.sendNoMatchNotification()
         else:
             self.sendWaitRequest({'next_rules_words':next_rules_words})
         

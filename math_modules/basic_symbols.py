@@ -5,7 +5,7 @@ from model.enums import NODE_TYPE
 class Potenza(MathTopic):
     
     def __init__(self,answerPoolSetter):
-        super().__init__(answerPoolSetter,Potenza.get_classname(),1)
+        super().__init__(answerPoolSetter,Potenza.get_classname())
         self._g = self.createGrammar()
         self._cursorPos = 0
         #rule template (per regole complesse con filler). Le foglie come i simboli semplici non ce l'hanno
@@ -16,7 +16,6 @@ class Potenza(MathTopic):
         #se mi arriva una richiesta di riposizionamento del cursore vuol dire che il srv ha già fatto il controllo che l'ultimo comando dato è DETTATURA e non EDITING
         #perciò devo sapere dov'è il cursore perchè il metodo di calcolo del cursore, partendo da questa posizione e dalla nuova regola metchata, sappia di quanto andare avanti
         
-    
     @staticmethod
     def createGrammar():
         rule = Literal("alla")
@@ -51,10 +50,11 @@ class Potenza(MathTopic):
 
 class Piu(MathTopic):
     def __init__(self,answerPoolSetter):
-        super().__init__(answerPoolSetter,Piu.get_classname(),1)
+        super().__init__(answerPoolSetter,Piu.get_classname())
         self._g = self.createGrammar()
         self._cursorPos = 0
         self.entryRuleWords = ["più"]
+        self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
     
     @staticmethod
     def createGrammar():
@@ -86,10 +86,11 @@ class Piu(MathTopic):
 
 class Per(MathTopic):
     def __init__(self,answerPoolSetter):
-        super().__init__(answerPoolSetter,Per.get_classname(),2) #2 è la lunghezza massima per triggerare una entry_rule. La devo vedere io di volta in volta a seconda della grammatica
+        super().__init__(answerPoolSetter,Per.get_classname())
         self._g = self.createGrammar()
         self._cursorPos = 0
         self.entryRuleWords = ["per","moltiplicato"] #esplicito quali sono i primi token di ogni expansione di ogni entry rule, almeno quando al layer arriva un toke nuovo del burst sa già vedere se inoltrare ai moduli o no
+        self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
 
     @staticmethod #mi permette di non mettere il self tra parentesi perchè non è un metodo di istanza
     def createGrammar():
