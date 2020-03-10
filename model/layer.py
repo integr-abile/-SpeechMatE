@@ -38,9 +38,10 @@ class Layer:
 
     #------------------------ CONTROLLI PRELIMINARI ---------------------------------------------
         if text_pos[0] == 'fine':
+            # pdb.set_trace()
             if len(self._leafRuleMatched) > 0: #se ho metchato delle foglie nel frattempo
                 farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
-                self.allTextSent +=' {}'.format(farthest_leaf)
+                self.allTextSent +='{}'.format(farthest_leaf)
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER_WITH_TEXT
                 return (LayerMsg.END_THIS_LAYER_WITH_TEXT,farthest_leaf) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
             else: #nessuna regola foglia è stata finora metchata
@@ -52,6 +53,7 @@ class Layer:
         if text_pos[0] not in self.nextWordsDictToList():
             #redirect back
             self._lastMsgTypeSent = LayerMsg.TEXT
+            self.allTextSent += '{}'.format(text_pos[0])
             return (LayerMsg.TEXT,text_pos[0])
 
     #-------------------------- MATCHING RULES ------------------------------------------
@@ -96,12 +98,12 @@ class Layer:
                         else: #se qualche testo latex sensato è rimasto nei match mescolato a qualche no_match
                             if all([elem[0] == ModuleMsg.TEXT for elem in relevant_answers]): #se le risposte sono tutte testo
                                 if all([elem[4]['leaf'] == True for elem in relevant_answers]):
-                                    self.allTextSent +=' {}'.format(candidate_transcription[0]) #posso prendere [0] perchè tanto sono tutti uguali
+                                    self.allTextSent +='{}'.format(candidate_transcription[0]) #posso prendere [0] perchè tanto sono tutti uguali
                                     #non aggiorno lo stato perchè tanto adesso finirà il layer
                                     self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER_WITH_TEXT
                                     return (LayerMsg.END_THIS_LAYER_WITH_TEXT,candidate_transcription[0])
                                 else: #non sono tutte foglie
-                                    self.allTextSent +=' {}'.format(candidate_transcription[0])
+                                    self.allTextSent +='{}'.format(candidate_transcription[0])
                                     #aggiorno lo stato delle trigger words
                                     for answer in relevant_answers:
                                         grammarName = answer[3]
@@ -124,11 +126,11 @@ class Layer:
                             print('candidate transcriptions WITHOUT NONE: {}'.format(candidatesDesWithoutNone))
                             if checkAllArrayElementsEquals(candidatesDesWithoutNone):
                                 if all(elem[4]['leaf'] == True for elem in answersWithoutNoMatch):
-                                    self.allTextSent +=' {}'.format(candidatesDesWithoutNone[0])
+                                    self.allTextSent +='{}'.format(candidatesDesWithoutNone[0])
                                     self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER_WITH_TEXT
                                     return (LayerMsg.END_THIS_LAYER_WITH_TEXT,candidatesDesWithoutNone[0])
                                 else:
-                                    self.allTextSent +=' {}'.format(candidatesDesWithoutNone[0])
+                                    self.allTextSent +='{}'.format(candidatesDesWithoutNone[0])
                                     self._lastMsgTypeSent = LayerMsg.TEXT
                                     return (LayerMsg.TEXT,candidatesDesWithoutNone[0])
                             else: #se anche nell'ultimo token non c'è coerenza in quello che scriverei
@@ -158,10 +160,12 @@ class Layer:
             grammarName = [elem[3] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
             rulenameRequestingNewLayer = [elem[4] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] 
             cursorOffset = [elem[5] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
+            tag = [elem[6] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
             self._lastMsgTypeSent = LayerMsg.NEW_LAYER_REQUEST
-            self._allNextRuleWordsDict[grammarName] = allTriggerWords
+            # pdb.set_trace()
+            self._allNextRuleWordsDict[grammarName] = allTriggerWords[0]
             #faccio arrivare al server le allTriggerWords perchè deve potermi riattivare con queste parole e il controllo lo farà lui
-            return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset)
+            return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag)
             
         self._lastMsgTypeSent = LayerMsg.TEXT
         return (LayerMsg.TEXT,"shouldn't happened")
@@ -175,16 +179,22 @@ class Layer:
         Da rulename è possibile risalire alla regola che ha richiesto un nuovo layer, perciò si può sapere dove 
         andrebbe a scrivere (logica di controllo nel codice del modulo). text è il testo da mettere in quello spazio
         """
+        # pdb.set_trace()
+        print('update string format layer prev con {}'.format(text))
         for grammar in self._allGrammars: #grammar è tipo Per, Piu
-            if grammar.module_name == grammarName: #grammar match
+            if grammar.moduleName == grammarName: #grammar match
                 #recupero la regola con le parole di attivazione che metchano lstOfTriggeringWords
-                for grammar_rule in grammar.rules: 
+                for grammar_rule in grammar._g.rules: 
+                    # pdb.set_trace()
                     if grammar_rule.name == rulename: #rule match
-                        grammar.createLatexText(text,grammar_rule.name)
+                        grammar.updateStringFormat(text,grammar_rule.name)
+                        print('ottenendo offset...')
+                        return grammar.getCursorOffsetForRulename(grammar_rule.name)
 
     #-------------------- UTILITY ---------------------------
     def nextWordsDictToList(self):
         triggeringWords = []
+        # pdb.set_trace()
         for grammarName in self._allNextRuleWordsDict:
             triggeringWords += self._allNextRuleWordsDict[grammarName]
         unique_list = list(set(triggeringWords))

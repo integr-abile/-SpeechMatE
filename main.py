@@ -34,6 +34,7 @@ def manageLayerAnswer(layerAnswer):
     print('Il server ha ricevuto {}'.format(layerAnswer))
     if layerAnswer[0] == LayerMsg.WAIT:
         pass
+
     elif layerAnswer[0] == LayerMsg.TEXT:
         txtToSend = layerAnswer[1]
         keyboard.type(txtToSend)
@@ -41,9 +42,22 @@ def manageLayerAnswer(layerAnswer):
         """Aggiornamento stato"""
         lastTextSent['text'] = txtToSend
         lastAction['action'] = Action.DETTATURA
+
     elif layerAnswer[0] == LayerMsg.END_THIS_LAYER:
-        #alla fine devo anche qua prendere ciò che è stato scritto dal layer uscente e ributtarlo a quello che sta per essere riattivato
-        pass
+        print('finishing layer without text')
+        allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
+        stack.pop() #fine layer
+        if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
+            eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
+            # pdb.set_trace()
+            if eventualCursorMovement is not None and eventualCursorMovement != 0:
+                if eventualCursorMovement > 0:
+                    keyboard.type('__mf{}'.format(eventualCursorMovement))
+                else:
+                    keyboard.type('__mb{}'.format(eventualCursorMovement))
+        """Aggiornamento stato"""
+        resetPrevLayerStatusVars()
+
     elif layerAnswer[0] == LayerMsg.END_THIS_LAYER_WITH_TEXT:
         if isinstance(layerAnswer[1],dict): #vuol dire che c'è parte del burst che ha prodotto una foglia, mentre il resto è da mandare dentro \text{}. A seguito di un esplicito comando 'fine'
             txtToSend = layerAnswer[1]['tag']
@@ -66,21 +80,34 @@ def manageLayerAnswer(layerAnswer):
         allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
         stack.pop() #fine layer
         if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
-            stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],prevLayerTriggerWords['words'])
+            eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
+            if eventualCursorMovement is not None and eventualCursorMovement != 0:
+                if eventualCursorMovement > 0:
+                    keyboard.type('__mf{}'.format(eventualCursorMovement))
+                else:
+                    keyboard.type('__mb{}'.format(eventualCursorMovement))
+        """Aggiornamento stato"""
+        resetPrevLayerStatusVars()
+
     elif layerAnswer[0] == LayerMsg.NEW_LAYER_REQUEST:
         prevLayerTriggerWords['words'] = layerAnswer[1] #aggiorno le parole per risollevare il layer che sto portando in secondo posto
         moduleAskingNewLayer['module_name'] = layerAnswer[2]  
         ruleAskingNewLayer['rulename'] = layerAnswer[3] 
         cursorOffset = int(layerAnswer[4])
+        tag = layerAnswer[5] #cosa scrivere prima di spostare il cursore
+        keyboard.type(tag)
+        keyboard.type('__mb{}'.format(len(tag))) #RITORNO A INIZIO COMANDO (perchè l'offset lo do rispetto a quello)
         if cursorOffset != 0: #può essere anche negativo se devo tornare indietro
             if cursorOffset > 0:
                 #dico a texstudio di andare avanti col cursore
-                pass
+                keyboard.type('__mf{}'.format(cursorOffset))
             else: #strettamente minore di 0
                 #dico a texstudio di andare indietro col cursore
-                pass
+                keyboard.type('__mb{}'.format(cursorOffset))
         stack.append(Layer())
-
+        """Aggiornamento stato"""
+        lastTextSent['text'] = tag if tag != None else lastTextSent['text']
+        lastAction['action'] = Action.DETTATURA
 
 """SERVER INTERFACE API"""
 
@@ -99,10 +126,16 @@ def new_text():
             allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
             stack.pop() #fine layer
             if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
-                stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],prevLayerTriggerWords['words'])
+                eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
+                if eventualCursorMovement is not None and eventualCursorMovement != 0:
+                    if eventualCursorMovement > 0:
+                        keyboard.type('__mf{}'.format(eventualCursorMovement))
+                    else:
+                        keyboard.type('__mb{}'.format(eventualCursorMovement))
             """Aggiornamento stato"""
-            prevLayerTriggerWords['words']
-        else:
+            resetPrevLayerStatusVars()
+
+        else: #questo token mi fa restare su questo layer
             newLayerIfNeeded()
             res = stack[-1].handleRawText((token.text,token.pos_),idx,num_burst_tokens)
             time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
@@ -115,6 +148,11 @@ def newLayerIfNeeded():
     """Crea un nuovo layer se lo stack è vuoto"""
     if len(stack) == 0:
         stack.append(Layer())
+
+def resetPrevLayerStatusVars():
+    prevLayerTriggerWords['words'] = []
+    ruleAskingNewLayer['rulename'] = None
+    moduleAskingNewLayer['module_name'] = None
 
 
 
