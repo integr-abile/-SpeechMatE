@@ -7,7 +7,7 @@ class Action(Enum):
 
 class NODE_TYPE(Enum):
     INTERNO = 0
-    FOGLIA = 1
+    FOGLIA = 1 #aiuta a facilitare la fine del layer senza dover dire esplicitamente 'fine'
 
 class LayerMsg(Enum):
     NEW_LAYER_REQUEST = 0 #forward da ModuleMsg

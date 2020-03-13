@@ -85,7 +85,7 @@ class MathTopic:
         tags = [tag for lst in tags for tag in lst] #flatten
         next_rules_words = [word for listOfWords in next_rules_words for word in listOfWords] #flatten.
         """Aggiorno stato"""
-        self._nextRulesWords = next_rules_words
+        self._nextRulesWords = next_rules_words if len(next_rules_words) > 0 else self._nextRulesWords 
 
         if rulenameRequestingNewLayer is not None: #se almeno una delle regole ha richiesto un nuovo layer, questa deve avere la priorità (si tratta anche di fare bene la grammatica)
             #trovo di quanto devo muovere il cursore rispetto a dov'è attualmente
