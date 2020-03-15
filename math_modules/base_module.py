@@ -41,7 +41,7 @@ class MathTopic:
     def updateStringFormat(self,text,rulename): #override if needed
         pass
 
-    def getCursorOffsetForRulename(self,rulename): #override se non stiamo parlando di una foglia
+    def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): #override se non stiamo parlando di una foglia
         return 0
 
 #-----------------------------------------------------------------------

@@ -94,6 +94,7 @@ def manageLayerAnswer(layerAnswer):
         moduleAskingNewLayer['module_name'] = layerAnswer[2]  
         ruleAskingNewLayer['rulename'] = layerAnswer[3] 
         cursorOffset = int(layerAnswer[4])
+        # pdb.set_trace()
         tag = layerAnswer[5] #cosa scrivere prima di spostare il cursore
         keyboard.type(tag)
         keyboard.type('__mb{}'.format(len(tag))) #RITORNO A INIZIO COMANDO (perchè l'offset lo do rispetto a quello)

@@ -43,8 +43,11 @@ class Potenza(MathTopic):
         self._body0 = text
 
 
-    def getCursorOffsetForRulename(self,rulename): 
-        """Data una certa regola, il modulo sapendo dov'è il cursore attualmente, può risalire a dove posizionarsi rispetto a dov'è"""
+    def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): 
+        """
+        Data una certa regola, il modulo sapendo dov'è il cursore attualmente, può risalire a dove posizionarsi rispetto a dov'è
+        è necessario specificare se la chiamata arriva dal layer oppure no perchè se arriva dal layer denota la fine del layer, se chiamata dal modulo l'inizio
+        """
         # pdb.set_trace()
         if rulename is None: #se è None sono all'inizio del format
             return 2 #perchè deve passare i caratter '^' e '{'

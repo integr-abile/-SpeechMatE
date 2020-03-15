@@ -51,10 +51,17 @@ class Layer:
         #controllo parole di trigger, altrimenti redirect back come TEXT al server
         allPotentialGrammars = []
         if text_pos[0] not in self.nextWordsDictToList():
+            last_words_to_say = ''
+            if len(self._leafRuleMatched) > 0:
+                # pdb.set_trace()
+                farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
+                self.allTextSent +='{}'.format(farthest_leaf['tag'])
+                last_words_to_say += '{}'.format(farthest_leaf['tag'])
             #redirect back
             self._lastMsgTypeSent = LayerMsg.TEXT
             self.allTextSent += '{}'.format(text_pos[0])
-            return (LayerMsg.TEXT,text_pos[0])
+            last_words_to_say += '{}'.format(text_pos[0])
+            return (LayerMsg.TEXT,last_words_to_say)
 
     #-------------------------- MATCHING RULES ------------------------------------------
         
@@ -189,7 +196,7 @@ class Layer:
                     if grammar_rule.name == rulename: #rule match
                         grammar.updateStringFormat(text,grammar_rule.name)
                         print('ottenendo offset...')
-                        return grammar.getCursorOffsetForRulename(grammar_rule.name)
+                        return grammar.getCursorOffsetForRulename(grammar_rule.name,True)
 
     #-------------------- UTILITY ---------------------------
     def nextWordsDictToList(self):
