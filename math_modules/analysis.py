@@ -92,7 +92,7 @@ class Pedice(MathTopic):
         è necessario specificare se la chiamata arriva dal layer oppure no perchè se arriva dal layer denota la fine del layer, se chiamata dal modulo l'inizio
         """
         if rulename == 'subscript': #sia all'inizio che alla fine del comando vado avanti di 2 caratteri per via della struttura del comando stesso perchè deve passare i caratter '_' e '{'
-            return 2
+            return (2,True) #questa regola è giunta al capolinea
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)

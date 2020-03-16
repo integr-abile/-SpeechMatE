@@ -15,6 +15,10 @@ class Layer:
 
 
     def __init__(self):
+        self.initAll()
+        
+
+    def initAll(self):
         self._answersPool = ModuleAnswersPool()
         self._allGrammars = []
         allNextRulesWords = [] #sarà una lista di dictionaryes contenente un dictionary per ogni grammatica (classe)
@@ -30,8 +34,6 @@ class Layer:
         self.allTextSent = '' #tiene conto di tutto ciò che è stato scritto da questo layer
         self._lastMsgTypeSent = None
 
-
-    
     def handleRawText(self,text_pos,idx,num_burst_tokens):
         """Chiamata token per token e token per token deve rispondere. idx è l'indice di quel token nel burst"""
         print("LAYER: ricevuto input dal server {}".format(text_pos))
@@ -61,6 +63,7 @@ class Layer:
             self._lastMsgTypeSent = LayerMsg.TEXT
             self.allTextSent += '{}'.format(text_pos[0])
             last_words_to_say += '{}'.format(text_pos[0])
+            self.initAll() #resetto perchè ora un comando (anche se non compariva nella grammatica, è stato dato.. che sia un numero o un monomio)
             return (LayerMsg.TEXT,last_words_to_say)
 
     #-------------------------- MATCHING RULES ------------------------------------------
@@ -196,7 +199,14 @@ class Layer:
                     if grammar_rule.name == rulename: #rule match
                         grammar.updateStringFormat(text,grammar_rule.name)
                         print('ottenendo offset...')
-                        return grammar.getCursorOffsetForRulename(grammar_rule.name,True)
+                        res = grammar.getCursorOffsetForRulename(grammar_rule.name,True)
+                        # pdb.set_trace()
+                        cursorOffset = res[0]
+                        isEndingRule = res[1]
+                        if isEndingRule: #resetto tutte le grammatiche
+                            self.initAll()
+                        return cursorOffset
+                        
 
     #-------------------- UTILITY ---------------------------
     def nextWordsDictToList(self):

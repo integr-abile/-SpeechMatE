@@ -50,9 +50,9 @@ class Seno(MathTopic):
         """
         if rulename == 'seno':
             if calledFromLayer:
-                return 2
+                return (2,True)
             else: #called from module
-                return 5
+                return (5,True) #True perchè ho finito questa regola
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)

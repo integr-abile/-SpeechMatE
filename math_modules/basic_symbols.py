@@ -50,9 +50,9 @@ class Potenza(MathTopic):
         """
         # pdb.set_trace()
         if rulename is None: #se è None sono all'inizio del format
-            return 2 #perchè deve passare i caratter '^' e '{'
+            return (2,True) #perchè deve passare i caratter '^' e '{'
         elif rulename == 'power': #vuol dire che col cursore sono al termine della scrittura del corpo della potenza
-            return 2
+            return (2,True)
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)

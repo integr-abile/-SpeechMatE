@@ -42,9 +42,11 @@ class MathTopic:
         pass
 
     def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): #override se non stiamo parlando di una foglia
-        return 0
+        """True o False indica che dopo lo spostamento del cursore questa regola è giunta al capolinea e quindi chiede al layer di riabilitare tutte le regole"""
+        return (0,False)
 
 #-----------------------------------------------------------------------
+
 
     def getLatexAlternatives(self,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token col suo POS
 
@@ -89,7 +91,7 @@ class MathTopic:
 
         if rulenameRequestingNewLayer is not None: #se almeno una delle regole ha richiesto un nuovo layer, questa deve avere la priorità (si tratta anche di fare bene la grammatica)
             #trovo di quanto devo muovere il cursore rispetto a dov'è attualmente
-            curOffset = self.getCursorOffsetForRulename(rulenameRequestingNewLayer)
+            curOffset = self.getCursorOffsetForRulename(rulenameRequestingNewLayer)[0] #0 è l'offset. se richiedo il layer è ovvio che non è finita la regola
             self.postNewLayerRequest(rulenameRequestingNewLayer,curOffset,tagOfRulenameRequestingNewLayer,{'next_rules_words':next_rules_words})
         elif checkAllArrayElementsEquals(tags) and len(tags)>0: #se tutte le regole qua sono d'accordo su cosa scrivere in latex
             areAllMatchedRulesInternal = all(node_type == NODE_TYPE.INTERNO for node_type in node_types)
