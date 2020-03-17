@@ -57,14 +57,19 @@ class Layer:
             if len(self._leafRuleMatched) > 0:
                 # pdb.set_trace()
                 farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
-                self.allTextSent +='{}'.format(farthest_leaf['tag'])
-                last_words_to_say += '{}'.format(farthest_leaf['tag'])
-            #redirect back
-            self._lastMsgTypeSent = LayerMsg.TEXT
-            self.allTextSent += '{}'.format(text_pos[0])
-            last_words_to_say += '{}'.format(text_pos[0])
-            self.initAll() #resetto perchè ora un comando (anche se non compariva nella grammatica, è stato dato.. che sia un numero o un monomio)
-            return (LayerMsg.TEXT,last_words_to_say)
+                farthest_leaf_index = farthest_leaf['idx']
+                farthest_leaf_tag = farthest_leaf['tag']
+                #reset perchè è come se avessi metchato una foglia e quindi sarebbe equiparabile ad un end layer
+                self._leafRuleMatched = []
+                self.initAll()
+                return(LayerMsg.REWIND,farthest_leaf_index+1,farthest_leaf_tag)
+            else:
+                #redirect back
+                self._lastMsgTypeSent = LayerMsg.TEXT
+                self.allTextSent += '{}'.format(text_pos[0])
+                last_words_to_say += '{}'.format(text_pos[0])
+                self.initAll() #resetto perchè ora un comando (anche se non compariva nella grammatica, è stato dato.. che sia un numero o un monomio)
+                return (LayerMsg.TEXT,last_words_to_say)
 
     #-------------------------- MATCHING RULES ------------------------------------------
         

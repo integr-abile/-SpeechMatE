@@ -15,6 +15,7 @@ class LayerMsg(Enum):
     END_THIS_LAYER_WITH_TEXT = 2 #quando hanno dato tutti una risposta e sono tutti foglie o quando c'è un end layer, ma ci sono foglie pendenti
     TEXT = 3 #ciò che arriva dai vari moduli è coerente e può essere inoltrato al srv, oppure è un testo da inviare "as is" perchè non triggera fin dal principio nessuna regola
     WAIT = 4 #quando uno o più moduli gli hanno risposto Wait o nessuna regola è stata metchata
+    REWIND = 5 #chiede al server di ripartire da un punto più indietro del burst a somministrare al layer il burst corrente
 
 class ModuleMsg(Enum):
     TEXT = 0 #una regola metchata o più regole metchate che però scriverebbero la stessa cosa

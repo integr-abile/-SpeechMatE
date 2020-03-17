@@ -20,12 +20,13 @@ keyboard = Controller()
 
 #app state
 stack = deque()
-curBurst = [] #il burst attuale sottoforma di array di token
+curBurst = {'tokens':[]} #il burst attuale sottoforma di array di token
 lastAction = {'action':Action.NESSUNA} #si riferisce alle azioni fatte nei confronti di texstudio. uso dict se non l'informazione non viene persistita tra richieste successive
 prevLayerTriggerWords = {'words':[]} #per ogni token controlla che quel token non appartenga a queste parole, se no vuol dire che il top layer deve terminare e l'n-1 layer deve passare di stato
 moduleAskingNewLayer = {'module_name':None} #per sapere a che grammatica reindirizzare il testo quando il top layer ha finito
 ruleAskingNewLayer = {'rulename':None} #servirà al modulo per sapere come muovere il cursore di conseguenza. Da rispedire indietro quando il top layer ha finito
 lastTextSent = {'text':''} #tiene conto dell'ultimo testo inviato a texstudio
+numBurstTokens = {'length':-1}
 
 def manageLayerAnswer(layerAnswer):
     """
@@ -62,7 +63,7 @@ def manageLayerAnswer(layerAnswer):
         if isinstance(layerAnswer[1],dict): #vuol dire che c'è parte del burst che ha prodotto una foglia, mentre il resto è da mandare dentro \text{}. A seguito di un esplicito comando 'fine'
             txtToSend = layerAnswer[1]['tag']
             lastGoodIdx = layerAnswer[1]['idx']
-            freeText = '\\text{{{0}}}'.format(curBurst[lastGoodIdx:])
+            freeText = '\\text{{{0}}}'.format(curBurst['tokens'][lastGoodIdx:])
             keyboard.type(txtToSend)
             app.logger.debug('txt for texstudio: {}'.format(txtToSend))
             keyboard.type(freeText)
@@ -109,21 +110,32 @@ def manageLayerAnswer(layerAnswer):
         """Aggiornamento stato"""
         lastTextSent['text'] = tag if tag != None else lastTextSent['text']
         lastAction['action'] = Action.DETTATURA
+    elif layerAnswer[0] == LayerMsg.REWIND: #il layer sta chiedendo al srv di risomministrargli il burst partendo da un certo punto
+        #faccio da server dall'index indicato fino a dove è arrivato al momento il burst. Poi faccio riprendere normalmente il server
+        # pdb.set_trace()
+        keyboard.type(layerAnswer[2]) #[2] è il tag della farthes leaf
+        idx_start = layerAnswer[1]
+        for i in range(idx_start,len(curBurst['tokens'])): #non vado oltre dove sono già arrivato
+            newLayerIfNeeded()
+            res = stack[-1].handleRawText((curBurst['tokens'][i],'NA'),i,numBurstTokens['length'])
+            time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
+            manageLayerAnswer(res)
+
 
 """SERVER INTERFACE API"""
 
 @app.route('/mathtext',methods=['POST'])
 def new_text():
     last_burst = request.json['text']
-    curBurst = []
+    curBurst['tokens'] = []
     doc = nlp(last_burst)
-    num_burst_tokens = len(doc)
+    numBurstTokens['length'] = len(doc)
 
     newLayerIfNeeded()
     
     for idx,token in enumerate(doc):
-        curBurst.append(token.text)
-        if token.text in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente
+        curBurst['tokens'].append(token.text)
+        if token.text in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex
             allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
             stack.pop() #fine layer
             if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
@@ -138,7 +150,7 @@ def new_text():
 
         else: #questo token mi fa restare su questo layer
             newLayerIfNeeded()
-            res = stack[-1].handleRawText((token.text,token.pos_),idx,num_burst_tokens)
+            res = stack[-1].handleRawText((token.text,token.pos_),idx,numBurstTokens['length'])
             time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
             manageLayerAnswer(res)
     return '',status.HTTP_200_OK
