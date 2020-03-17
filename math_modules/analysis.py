@@ -101,9 +101,95 @@ class Pedice(MathTopic):
 
 
 
+
+class Frazione(MathTopic):
+    def __init__(self,answerPoolSetter):
+        super().__init__(answerPoolSetter,Frazione.get_classname())
+        self._g = self.createGrammar()
+        self._cursorPos = 0
+        #rule template (per regole complesse con filler). Le foglie come i simboli semplici non ce l'hanno
+        self._ruleTemplate = '\\frac{0}{1}'
+        self._body0 = ''
+        self._body1 = ''
+        self.entryRuleWords = ["frazione"]
+        self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
+        self._lastRuleMatchedName = None #mi serve per sapere dov'è il cursore. soprattutto utile in caso in cui il comando sia spezzettato su più parentesi
+        
+    @staticmethod
+    def createGrammar():
+        fracExpansion = Literal("frazione")
+        fracExpansion.tag = '\\frac{}{}'
+        fracRule = PublicRule("fraction_main",fracExpansion) 
+        numeratorExpansion = Literal("frazione numeratore")
+        numeratorExpansion.tag = None
+        numeratorRule = PublicRule("fraction_numerator",numeratorExpansion)
+        denominatorExpansion = Literal("frazione numeratore denominatore")
+        denominatorExpansion.tag = None
+        denominatorRule = PublicRule("fraction_denominator",denominatorExpansion)
+        #setattr section
+        setattr(fracRule,'node_type',NODE_TYPE.INTERNO)
+        setattr(fracRule,'request_new_layer',False)
+        setattr(fracRule,'next_rules_trigger_words',['numeratore']) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(fracRule,'is_entry_rule',True)
+        #-------------------
+        setattr(numeratorRule,'node_type',NODE_TYPE.INTERNO)
+        setattr(numeratorRule,'request_new_layer',True)
+        setattr(numeratorRule,'next_rules_trigger_words',['denominatore']) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(numeratorRule,'is_entry_rule',False)
+        setattr(numeratorRule,'go_to_begin',len('\\frac{}{}')) #attributo che specifica se fare carry-home
+        #------------------------
+        setattr(denominatorRule,'node_type',NODE_TYPE.INTERNO)
+        setattr(denominatorRule,'request_new_layer',True)
+        setattr(denominatorRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(denominatorRule,'is_entry_rule',False)
+        #grammar creation section
+        g = Grammar()
+        g.add_rules(fracRule,numeratorRule,denominatorRule)
+        return g
+
+    @classmethod
+    def get_classname(cls):
+        return cls.__name__
+
+    def createLatexText(self,text,rulename=None):
+        """Nei comandi lunghi so come interpretare text in base ai comandi già passati"""
+        return self._ruleTemplate.format(self._body0,self._body1)
+
+    def updateStringFormat(self,text,rulename):
+        if rulename == 'fraction_numerator':
+            self._body0 = text
+        elif rulename == 'fraction_denominator':
+            self._body1 = text
+
+
+    def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): 
+        """
+        Data una certa regola, il modulo sapendo dov'è il cursore attualmente, può risalire a dove posizionarsi rispetto a dov'è
+        è necessario specificare se la chiamata arriva dal layer oppure no perchè se arriva dal layer denota la fine del layer, se chiamata dal modulo l'inizio
+        """
+        if rulename == 'fraction_numerator':
+            if not calledFromLayer:
+                return (6,False)
+        elif rulename == 'fraction_denominator':
+            if not calledFromLayer:
+                return (2,True) #è una ending rule
+    
+    def getLatexAlternatives(self, last_token):
+        return super().getLatexAlternatives(last_token)
+
+
+
+
+
+
+
+
+
+
+
 #funzione generatrice. Si chiamerà così in tutti i moduli per convenzione
 def generateGrammars(answerPoolSetter):
-    grammars = [PiuMeno(answerPoolSetter),Pedice(answerPoolSetter)] 
+    grammars = [PiuMeno(answerPoolSetter),Pedice(answerPoolSetter),Frazione(answerPoolSetter)] 
     entryRuleWords = [{grammar.moduleName:grammar.entryRuleWords} for grammar in grammars] #entry rule words di tutte le grammatiche
     entryRuleWordsDict = {}
     for entryRuleWord in entryRuleWords:

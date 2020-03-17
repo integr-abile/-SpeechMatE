@@ -160,7 +160,7 @@ class Tangente(MathTopic):
         """
         if rulename == 'tangente':
             if calledFromLayer:
-                return (2,True)
+                return (2,True) #True sta per isEndingRule
             else: #called from module
                 return (5,True) #True perchè ho finito questa regola
     

@@ -97,8 +97,17 @@ def manageLayerAnswer(layerAnswer):
         cursorOffset = int(layerAnswer[4])
         # pdb.set_trace()
         tag = layerAnswer[5] #cosa scrivere prima di spostare il cursore
-        keyboard.type(tag)
-        keyboard.type('__mb{}'.format(len(tag))) #RITORNO A INIZIO COMANDO (perchè l'offset lo do rispetto a quello)
+        carryHomeLength = layerAnswer[6] #se != None indica che devo muovere il cursore indietro di una certa quantità prima di applicare cursorOffset
+        if tag is not None:
+            keyboard.type(tag)
+            keyboard.type('__mb{}'.format(len(tag))) #RITORNO A INIZIO COMANDO (perchè l'offset lo do rispetto a quello)
+        else:
+            if carryHomeLength is not None:
+                carryHomeLength = int(carryHomeLength)
+                if carryHomeLength > 0:
+                    keyboard.type('__mb{}'.format(carryHomeLength))
+                else:
+                    keyboard.type('__mf{}'.format(carryHomeLength))
         if cursorOffset != 0: #può essere anche negativo se devo tornare indietro
             if cursorOffset > 0:
                 #dico a texstudio di andare avanti col cursore

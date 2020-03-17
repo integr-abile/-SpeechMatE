@@ -21,8 +21,8 @@ class MathTopic:
         """node_type_info è un dizionario {'leaf':bool} (di default leaf:False) che specifica se la regola triggerata è una foglia oppure no"""
         self._answerPoolSetter((ModuleMsg.TEXT,text,next_rules_words,self.moduleName,node_type_info))
 
-    def postNewLayerRequest(self,rulenameRequestingNewLayer,cursorOffset,tag,next_rules_words={'next_rules_words':[]}):
-        self._answerPoolSetter((ModuleMsg.NEW_LAYER_REQUEST,None,next_rules_words,self.moduleName,rulenameRequestingNewLayer,cursorOffset,tag)) 
+    def postNewLayerRequest(self,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength,next_rules_words={'next_rules_words':[]}):
+        self._answerPoolSetter((ModuleMsg.NEW_LAYER_REQUEST,None,next_rules_words,self.moduleName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)) 
     
     def sendWaitRequest(self,next_rules_words={'next_rules_words':[]}):
         self._answerPoolSetter((ModuleMsg.WAIT,None,next_rules_words,self.moduleName))
@@ -70,6 +70,7 @@ class MathTopic:
         next_rules_words = [] #tiene conto delle parole successive per triggerare nuove regole (utile nel caso di richiesta di nuovi layer)
         rulenameRequestingNewLayer = None #servirà per il calcolo dell'offset del cursore
         tagOfRulenameRequestingNewLayer = None #perchè tra tutti i tag (se esistono cmq ho fatto male la grammatica) questo deve avere la precedenza. Può anche non esistere
+        carryHomeLength = -1 #se un comando specifica di quanto tornare indietro prima di far avanzare il cursore 
 
         for i in range(1,len(self._buffer)+1): #+1 perchè andrò indietro con gli indici
             matched_rules = self._g.find_matching_rules(' '.join(self._buffer[-i:])) #qua creo ad ogni iterazione stringhe sempre più lunghe partendo dal fondo
@@ -77,6 +78,8 @@ class MathTopic:
             for matched_rule in matched_rules: #per ogni regola metchata
                 matched_rule.disable() #disabilitandola è come se la marcassi come visitata e il sistema non la metcha più
                 # pdb.set_trace()
+                if hasattr(matched_rule,'go_to_begin'):
+                    carryHomeLength = matched_rule.go_to_begin
                 tags.append([tag for tag in matched_rule.matched_tags if len(matched_rule.matched_tags)>0])
                 node_types.append(matched_rule.node_type)
                 [next_rules_words.append(trigger_word) for trigger_word in matched_rule.next_rules_trigger_words]
@@ -85,17 +88,19 @@ class MathTopic:
                     tagOfRulenameRequestingNewLayer = matched_rule.matched_tags[0] if len(matched_rule.matched_tags) > 0 else None
                     
         tags = [tag for lst in tags for tag in lst] #flatten
-        next_rules_words = [word for listOfWords in next_rules_words for word in listOfWords] #flatten.
+        # pdb.set_trace()
+        # next_rules_words = [word for listOfWords in next_rules_words for word in listOfWords] #flatten.
         """Aggiorno stato"""
         self._nextRulesWords = next_rules_words if len(next_rules_words) > 0 else self._nextRulesWords 
 
         if rulenameRequestingNewLayer is not None: #se almeno una delle regole ha richiesto un nuovo layer, questa deve avere la priorità (si tratta anche di fare bene la grammatica)
             #trovo di quanto devo muovere il cursore rispetto a dov'è attualmente
             curOffset = self.getCursorOffsetForRulename(rulenameRequestingNewLayer)[0] #0 è l'offset. se richiedo il layer è ovvio che non è finita la regola
-            self.postNewLayerRequest(rulenameRequestingNewLayer,curOffset,tagOfRulenameRequestingNewLayer,{'next_rules_words':next_rules_words})
+            self.postNewLayerRequest(rulenameRequestingNewLayer,curOffset,tagOfRulenameRequestingNewLayer,carryHomeLength,{'next_rules_words':next_rules_words})
         elif checkAllArrayElementsEquals(tags) and len(tags)>0: #se tutte le regole qua sono d'accordo su cosa scrivere in latex
             areAllMatchedRulesInternal = all(node_type == NODE_TYPE.INTERNO for node_type in node_types)
-            self.sendLatexText(self.createLatexText(tags[0]),{'leaf':not areAllMatchedRulesInternal},{'next_rules_words':next_rules_words}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
+            # pdb.set_trace()
+            self.sendLatexText(tags[0],{'leaf':not areAllMatchedRulesInternal},{'next_rules_words':next_rules_words}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
         elif len(node_types) == 0: #nessuna regola è stata metchata
             self.sendNoMatchNotification()
         else:

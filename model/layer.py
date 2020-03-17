@@ -176,11 +176,12 @@ class Layer:
             rulenameRequestingNewLayer = [elem[4] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] 
             cursorOffset = [elem[5] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
             tag = [elem[6] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
+            carryHomeLength = [elem[7] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] if [elem[7] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] != -1 else None
             self._lastMsgTypeSent = LayerMsg.NEW_LAYER_REQUEST
             # pdb.set_trace()
             self._allNextRuleWordsDict[grammarName] = allTriggerWords[0]
             #faccio arrivare al server le allTriggerWords perchè deve potermi riattivare con queste parole e il controllo lo farà lui
-            return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag)
+            return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)
             
         self._lastMsgTypeSent = LayerMsg.TEXT
         return (LayerMsg.TEXT,"shouldn't happened")
