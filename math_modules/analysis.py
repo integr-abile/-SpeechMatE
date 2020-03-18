@@ -102,6 +102,64 @@ class Pedice(MathTopic):
 
 
 
+class ValoreAssoluto(MathTopic):
+    def __init__(self,answerPoolSetter):
+        super().__init__(answerPoolSetter,ValoreAssoluto.get_classname())
+        self._g = self.createGrammar()
+        self._cursorPos = 0
+        #rule template (per regole complesse con filler). Le foglie come i simboli semplici non ce l'hanno
+        self._ruleTemplate = '|{0}|'
+        self._body0 = ''
+        self.entryRuleWords = ["valore","assoluto","di"]
+        self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
+        self._lastRuleMatchedName = None #mi serve per sapere dov'è il cursore. soprattutto utile in caso in cui il comando sia spezzettato su più parentesi
+        
+    @staticmethod
+    def createGrammar():
+        rule = Literal("valore assoluto di")
+        rule.tag = '||'
+        absoluteValueRule = PublicRule("absolute_value",rule) 
+        #setattr section
+        setattr(absoluteValueRule,'node_type',NODE_TYPE.INTERNO) #vuol dire che si dovrà terminare con una foglia
+        setattr(absoluteValueRule,'request_new_layer',True)
+        setattr(absoluteValueRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(absoluteValueRule,'is_entry_rule',True)
+        #grammar creation section
+        g = Grammar()
+        g.add_rule(absoluteValueRule)
+        return g
+
+    @classmethod
+    def get_classname(cls):
+        return cls.__name__
+
+    def createLatexText(self,text,rulename=None):
+        """Nei comandi lunghi so come interpretare text in base ai comandi già passati"""
+        return self._ruleTemplate.format(self._body0)
+
+    def updateStringFormat(self,text,rulename):
+        self._body0 = text
+
+
+    def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): 
+        """
+        Data una certa regola, il modulo sapendo dov'è il cursore attualmente, può risalire a dove posizionarsi rispetto a dov'è
+        è necessario specificare se la chiamata arriva dal layer oppure no perchè se arriva dal layer denota la fine del layer, se chiamata dal modulo l'inizio
+        """
+        if rulename == 'absolute_value':
+            if calledFromLayer:
+                return (1,True) #True sta per ending rule
+            else:
+                return (1,True)
+    
+    def getLatexAlternatives(self, last_token):
+        return super().getLatexAlternatives(last_token)
+
+
+
+
+
+
 class Frazione(MathTopic):
     def __init__(self,answerPoolSetter):
         super().__init__(answerPoolSetter,Frazione.get_classname())
@@ -193,7 +251,10 @@ class Frazione(MathTopic):
 
 #funzione generatrice. Si chiamerà così in tutti i moduli per convenzione
 def generateGrammars(answerPoolSetter):
-    grammars = [PiuMeno(answerPoolSetter),Pedice(answerPoolSetter),Frazione(answerPoolSetter)] 
+    grammars = [PiuMeno(answerPoolSetter),
+                Pedice(answerPoolSetter),
+                Frazione(answerPoolSetter),
+                ValoreAssoluto(answerPoolSetter)] 
     entryRuleWords = [{grammar.moduleName:grammar.entryRuleWords} for grammar in grammars] #entry rule words di tutte le grammatiche
     entryRuleWordsDict = {}
     for entryRuleWord in entryRuleWords:
