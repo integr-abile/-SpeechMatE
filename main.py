@@ -144,24 +144,31 @@ def new_text():
     
     for idx,token in enumerate(doc):
         curBurst['tokens'].append(token.text)
+        # pdb.set_trace()
         if token.text in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex
+            # pdb.set_trace()
             allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
             stack.pop() #fine layer
             if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
                 eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
-                if eventualCursorMovement is not None and eventualCursorMovement != 0:
-                    if eventualCursorMovement > 0:
-                        keyboard.type('__mf{}'.format(eventualCursorMovement))
-                    else:
-                        keyboard.type('__mb{}'.format(eventualCursorMovement))
+                # pdb.set_trace()
+                # if eventualCursorMovement is not None and eventualCursorMovement != 0:
+                #     if eventualCursorMovement > 0:
+                #         time.sleep(1)
+                #         keyboard.type('__mf{}'.format(eventualCursorMovement))
+                #     else:
+                #         time.sleep(1)
+                #         keyboard.type('__mb{}'.format(eventualCursorMovement))
+                        
+                
             """Aggiornamento stato"""
             resetPrevLayerStatusVars()
 
-        else: #questo token mi fa restare su questo layer
-            newLayerIfNeeded()
-            res = stack[-1].handleRawText((token.text,token.pos_),idx,numBurstTokens['length'])
-            time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
-            manageLayerAnswer(res)
+        # else: #questo token mi fa restare su questo layer
+        newLayerIfNeeded()
+        res = stack[-1].handleRawText((token.text,token.pos_),idx,numBurstTokens['length'])
+        time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
+        manageLayerAnswer(res)
     return '',status.HTTP_200_OK
 
 """UTILITY METHODS"""

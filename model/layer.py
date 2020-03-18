@@ -39,6 +39,7 @@ class Layer:
         print("LAYER: ricevuto input dal server {}".format(text_pos))
 
     #------------------------ CONTROLLI PRELIMINARI ---------------------------------------------
+
         if text_pos[0] == 'fine':
             # pdb.set_trace()
             if len(self._leafRuleMatched) > 0: #se ho metchato delle foglie nel frattempo
@@ -49,8 +50,9 @@ class Layer:
             else: #nessuna regola foglia è stata finora metchata
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER
                 return (LayerMsg.END_THIS_LAYER,None)
-    
-        #controllo parole di trigger, altrimenti redirect back come TEXT al server
+
+
+         #controllo parole di trigger, altrimenti redirect back come TEXT al server
         allPotentialGrammars = []
         if text_pos[0] not in self.nextWordsDictToList():
             last_words_to_say = ''
@@ -71,6 +73,8 @@ class Layer:
                 self.initAll() #resetto perchè ora un comando (anche se non compariva nella grammatica, è stato dato.. che sia un numero o un monomio)
                 return (LayerMsg.TEXT,last_words_to_say)
 
+        
+    
     #-------------------------- MATCHING RULES ------------------------------------------
         
         #inoltro ai moduli con la creazione dei thread e rispondo solo quando hanno finito tutti (ThreadPoolExecutor). Ognuno popola la struttura dati condivisa
@@ -171,7 +175,8 @@ class Layer:
                 return (LayerMsg.WAIT,None)
         else: #c'è almeno un match che richiede di INIZIARE UN NUOVO LAYER, quindi gli dò priorità
             #devo dirlo al server dicendogli anche che parole servono per sbloccarmi
-            allTriggerWords = [(elem[2]['next_rules_words'],elem[3]) for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
+            # pdb.set_trace()
+            allTriggerWords = [elem[2]['next_rules_words'] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
             grammarName = [elem[3] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
             rulenameRequestingNewLayer = [elem[4] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] 
             cursorOffset = [elem[5] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0]
@@ -179,7 +184,7 @@ class Layer:
             carryHomeLength = [elem[7] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] if [elem[7] for elem in answers if elem[0] == ModuleMsg.NEW_LAYER_REQUEST][0] != -1 else None
             self._lastMsgTypeSent = LayerMsg.NEW_LAYER_REQUEST
             # pdb.set_trace()
-            self._allNextRuleWordsDict[grammarName] = allTriggerWords[0]
+            self._allNextRuleWordsDict[grammarName] = allTriggerWords
             #faccio arrivare al server le allTriggerWords perchè deve potermi riattivare con queste parole e il controllo lo farà lui
             return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)
             

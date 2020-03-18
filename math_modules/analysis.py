@@ -136,7 +136,7 @@ class Frazione(MathTopic):
         setattr(numeratorRule,'request_new_layer',True)
         setattr(numeratorRule,'next_rules_trigger_words',['denominatore']) #non mettere None se no salta tutto perchè None non è iterabile
         setattr(numeratorRule,'is_entry_rule',False)
-        setattr(numeratorRule,'go_to_begin',len('\\frac{}{}')) #attributo che specifica se fare carry-home
+        setattr(numeratorRule,'go_to_begin',len('\\frac{}{}')) #attributo che specifica se fare carry-home.
         #------------------------
         setattr(denominatorRule,'node_type',NODE_TYPE.INTERNO)
         setattr(denominatorRule,'request_new_layer',True)
@@ -170,9 +170,13 @@ class Frazione(MathTopic):
         if rulename == 'fraction_numerator':
             if not calledFromLayer:
                 return (6,False)
+            else: #called from layer per l'ending rule del numeratore
+                return(0,False) 
         elif rulename == 'fraction_denominator':
             if not calledFromLayer:
-                return (2,True) #è una ending rule
+                return (2,True) 
+            else:
+                return(2,True)
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)
