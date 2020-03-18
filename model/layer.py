@@ -1,4 +1,4 @@
-from math_modules import algebra,analysis,basic_symbols,trigonometry #genereremo dinamicamente i testi di questi import
+from math_modules import algebra,analysis,basic_symbols,trigonometry,letters #genereremo dinamicamente i testi di questi import
 import os
 from model.enums import LayerMsg
 from model.enums import ModuleMsg
@@ -23,7 +23,7 @@ class Layer:
         self._allGrammars = []
         allNextRulesWords = [] #sarà una lista di dictionaryes contenente un dictionary per ogni grammatica (classe)
         self._allNextRuleWordsDict = {} #sarà il merge dei dictionaries di allNextRuleWords
-        for module in [algebra,analysis,basic_symbols,trigonometry]: #genereremo dinamicamente questo sorgente in fase di installazione..... perchè non si riesce ad iterare sui moduli
+        for module in [algebra,analysis,basic_symbols,trigonometry,letters]: #genereremo dinamicamente questo sorgente in fase di installazione..... perchè non si riesce ad iterare sui moduli
             moduleGrammar = module.generateGrammars(self._answersPool.addMessage)
             self._allGrammars.append(moduleGrammar[0]) #[0] è la grammatica vera e propria
             allNextRulesWords.append(moduleGrammar[1]) #[1] sono i dictionaries delle varie grammatiche

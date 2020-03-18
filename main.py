@@ -11,12 +11,15 @@ from model import enums
 from model.layer import Layer
 from model.enums import LayerMsg
 from model.enums import Action
+import json
 import pdb #debug
 
 app = Flask(__name__)
 CORS(app) #di default CORS *
 nlp = it_core_news_sm.load()
 keyboard = Controller()
+with open('./util/word2num.json') as word2num_json:
+    word2numDict = json.load(word2num_json)
 
 #app state
 stack = deque()
@@ -143,13 +146,23 @@ def new_text():
     newLayerIfNeeded()
     
     for idx,token in enumerate(doc):
-        curBurst['tokens'].append(token.text)
+        tokenText = ''
+        tokenPos = ''
+        if token.text in word2numDict.keys():
+            tokenText = word2numDict[token.text]
+            tokenPos = 'NUM'
+        else:
+            tokenText = token.text
+            tokenPos = token.pos_
+
+        curBurst['tokens'].append(tokenText)
         # pdb.set_trace()
-        if token.text in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex
+        if tokenText in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex
             # pdb.set_trace()
             allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
             stack.pop() #fine layer
             if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
+                #TODO: forse sto metodo neanche serve.. aggiornare lo string format dico... aveva senso nel find & replace, ma qua non saprei....
                 eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
                 # pdb.set_trace()
                 # if eventualCursorMovement is not None and eventualCursorMovement != 0:
@@ -166,7 +179,7 @@ def new_text():
 
         # else: #questo token mi fa restare su questo layer
         newLayerIfNeeded()
-        res = stack[-1].handleRawText((token.text,token.pos_),idx,numBurstTokens['length'])
+        res = stack[-1].handleRawText((tokenText,tokenPos),idx,numBurstTokens['length'])
         time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
         manageLayerAnswer(res)
     return '',status.HTTP_200_OK
