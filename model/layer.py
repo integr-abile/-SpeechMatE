@@ -45,9 +45,11 @@ class Layer:
             if len(self._leafRuleMatched) > 0: #se ho metchato delle foglie nel frattempo
                 farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
                 self.allTextSent +='{}'.format(farthest_leaf)
-                self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER_WITH_TEXT
-                return (LayerMsg.END_THIS_LAYER_WITH_TEXT,farthest_leaf) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
+                self.initAll()
+                self._lastMsgTypeSent = LayerMsg.TEXT
+                return (LayerMsg.TEXT,farthest_leaf) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
             else: #nessuna regola foglia è stata finora metchata
+                self.initAll()
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER
                 return (LayerMsg.END_THIS_LAYER,None)
 
@@ -109,9 +111,10 @@ class Layer:
                     if checkAllArrayElementsEquals(candidate_transcription): #se anche tra moduli c'è coerenza in merito a cosa trascrivere
                         if all(elem[1]==None for elem in relevant_answers): #se tutti i moduli mi stanno dicendo che non hanno metchato niente o sono con testi vuoti, ma comunque non sono out-of-play
                             for answer in relevant_answers:
-                                if answer[0] == ModuleMsg.TEXT: #se ho questo tipo di messaggio vuol dire che c'è stata comunque una regola metchata e quindi devo aggiornare le trigger words
+                                if answer[0] == ModuleMsg.TEXT: #se ho questo tipo di messaggio vuol dire che c'è stata comunque una regola metchata e quindi devo aggiornare le trigger words se non è stata metchata una foglia per cui le trigger words non hanno senso
                                     grammarName = answer[3]
-                                    self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
+                                    if answer[4]['leaf'] == False:
+                                        self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
                             self._lastMsgTypeSent = LayerMsg.WAIT
                             return (LayerMsg.WAIT,None)
                         else: #se qualche testo latex sensato è rimasto nei match mescolato a qualche no_match
@@ -119,14 +122,17 @@ class Layer:
                                 if all([elem[4]['leaf'] == True for elem in relevant_answers]):
                                     self.allTextSent +='{}'.format(candidate_transcription[0]) #posso prendere [0] perchè tanto sono tutti uguali
                                     #non aggiorno lo stato perchè tanto adesso finirà il layer
-                                    self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER_WITH_TEXT
-                                    return (LayerMsg.END_THIS_LAYER_WITH_TEXT,candidate_transcription[0])
+                                    self.initAll()
+                                    self._lastMsgTypeSent = LayerMsg.TEXT
+                                    return (LayerMsg.TEXT,candidate_transcription[0])
                                 else: #non sono tutte foglie
                                     self.allTextSent +='{}'.format(candidate_transcription[0])
                                     #aggiorno lo stato delle trigger words
                                     for answer in relevant_answers:
                                         grammarName = answer[3]
-                                        self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
+                                        # pdb.set_trace()
+                                        if answer[4]['leaf'] == False:
+                                            self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
                                     self._lastMsgTypeSent = LayerMsg.TEXT
                                     return (LayerMsg.TEXT,candidate_transcription[0])
                             else: #effettivamente c'è ancora qualche messaggio NO_MATCH
@@ -134,7 +140,8 @@ class Layer:
                                 for answer in relevant_answers:
                                     if answer[0] == ModuleMsg.TEXT: #se ho questo tipo di messaggio vuol dire che c'è stata comunque una regola metchata e quindi devo aggiornare le trigger words
                                         grammarName = answer[3]
-                                        self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
+                                        if answer[4]['leaf'] == False:
+                                            self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
                                 self._lastMsgTypeSent = LayerMsg.WAIT
                                 return (LayerMsg.WAIT,None)
                     else: #se tra moduli trascriverebbero cose diverse, oppure altri metchano regole, altri no 
@@ -146,8 +153,9 @@ class Layer:
                             if checkAllArrayElementsEquals(candidatesDesWithoutNone):
                                 if all(elem[4]['leaf'] == True for elem in answersWithoutNoMatch):
                                     self.allTextSent +='{}'.format(candidatesDesWithoutNone[0])
-                                    self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER_WITH_TEXT
-                                    return (LayerMsg.END_THIS_LAYER_WITH_TEXT,candidatesDesWithoutNone[0])
+                                    self.initAll()
+                                    self._lastMsgTypeSent = LayerMsg.TEXT
+                                    return (LayerMsg.TEXT,candidatesDesWithoutNone[0])
                                 else:
                                     self.allTextSent +='{}'.format(candidatesDesWithoutNone[0])
                                     self._lastMsgTypeSent = LayerMsg.TEXT
@@ -155,7 +163,8 @@ class Layer:
                             else: #se anche nell'ultimo token non c'è coerenza in quello che scriverei
                                 for answer in answersWithoutNoMatch:
                                     grammarName = answer[3]
-                                    self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
+                                    if answer[4]['leaf'] == False:
+                                        self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
                                 self._lastMsgTypeSent = LayerMsg.WAIT
                                 return (LayerMsg.WAIT,None)
                         else: #non sono ancora arrivato all'ultimo token del burst
@@ -163,7 +172,8 @@ class Layer:
                             for answer in relevant_answers:
                                 if answer[0] == ModuleMsg.TEXT: #se ho questo tipo di messaggio vuol dire che c'è stata comunque una regola metchata e quindi devo aggiornare le trigger words
                                     grammarName = answer[3]
-                                    self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
+                                    if answer[4]['leaf'] == False:
+                                        self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
                             self._lastMsgTypeSent = LayerMsg.WAIT
                             return (LayerMsg.WAIT,None)
             else: #C'è qualche WAIT. ci sono opinioni discordanti rispetto a quello che si dovrebbe scrivere in latex tra le regole metchate nei vari moduli

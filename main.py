@@ -59,42 +59,43 @@ def manageLayerAnswer(layerAnswer):
                     keyboard.type('__mf{}'.format(eventualCursorMovement))
                 else:
                     keyboard.type('__mb{}'.format(eventualCursorMovement))
-        """Aggiornamento stato"""
-        resetPrevLayerStatusVars()
+        # """Aggiornamento stato"""
+        # resetPrevLayerStatusVars()
 
     elif layerAnswer[0] == LayerMsg.END_THIS_LAYER_WITH_TEXT:
-        if isinstance(layerAnswer[1],dict): #vuol dire che c'è parte del burst che ha prodotto una foglia, mentre il resto è da mandare dentro \text{}. A seguito di un esplicito comando 'fine'
-            txtToSend = layerAnswer[1]['tag']
-            lastGoodIdx = layerAnswer[1]['idx']
-            freeText = '\\text{{{0}}}'.format(curBurst['tokens'][lastGoodIdx:])
-            keyboard.type(txtToSend)
-            app.logger.debug('txt for texstudio: {}'.format(txtToSend))
-            keyboard.type(freeText)
-            app.logger.debug('txt for texstudio as plain text: {}'.format(freeText))
-            """Aggiornamento stato"""
-            lastTextSent['text'] = freeText
-            lastAction['action'] = Action.DETTATURA
-        else: #il messaggio di fine layer arriva con un testo semplice come payload
-            txtToSend = layerAnswer[1]
-            keyboard.type(txtToSend)
-            app.logger.debug('txt for texstudio: {}'.format(txtToSend))
-            """Aggiornamento stato"""
-            lastTextSent['text'] = txtToSend
-            lastAction['action'] = Action.DETTATURA
-        allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
-        stack.pop() #fine layer
-        if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
-            eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
-            if eventualCursorMovement is not None and eventualCursorMovement != 0:
-                if eventualCursorMovement > 0:
-                    keyboard.type('__mf{}'.format(eventualCursorMovement))
-                else:
-                    keyboard.type('__mb{}'.format(eventualCursorMovement))
-        """Aggiornamento stato"""
-        resetPrevLayerStatusVars()
+        pass
+        # if isinstance(layerAnswer[1],dict): #vuol dire che c'è parte del burst che ha prodotto una foglia, mentre il resto è da mandare dentro \text{}. A seguito di un esplicito comando 'fine'
+        #     txtToSend = layerAnswer[1]['tag']
+        #     lastGoodIdx = layerAnswer[1]['idx']
+        #     freeText = '\\text{{{0}}}'.format(curBurst['tokens'][lastGoodIdx:])
+        #     keyboard.type(txtToSend)
+        #     app.logger.debug('txt for texstudio: {}'.format(txtToSend))
+        #     keyboard.type(freeText)
+        #     app.logger.debug('txt for texstudio as plain text: {}'.format(freeText))
+        #     """Aggiornamento stato"""
+        #     lastTextSent['text'] = freeText
+        #     lastAction['action'] = Action.DETTATURA
+        # else: #il messaggio di fine layer arriva con un testo semplice come payload
+        #     txtToSend = layerAnswer[1]
+        #     keyboard.type(txtToSend)
+        #     app.logger.debug('txt for texstudio: {}'.format(txtToSend))
+        #     """Aggiornamento stato"""
+        #     lastTextSent['text'] = txtToSend
+        #     lastAction['action'] = Action.DETTATURA
+        # allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
+        # stack.pop() #fine layer
+        # if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
+        #     eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
+        #     if eventualCursorMovement is not None and eventualCursorMovement != 0:
+        #         if eventualCursorMovement > 0:
+        #             keyboard.type('__mf{}'.format(eventualCursorMovement))
+        #         else:
+        #             keyboard.type('__mb{}'.format(eventualCursorMovement))
+        # """Aggiornamento stato"""
+        # resetPrevLayerStatusVars()
 
     elif layerAnswer[0] == LayerMsg.NEW_LAYER_REQUEST:
-        prevLayerTriggerWords['words'] = layerAnswer[1] #aggiorno le parole per risollevare il layer che sto portando in secondo posto
+        prevLayerTriggerWords['words'] = layerAnswer[1] if len(layerAnswer[1])>0 else prevLayerTriggerWords['words'] #aggiorno le parole per risollevare il layer che sto portando in secondo posto
         moduleAskingNewLayer['module_name'] = layerAnswer[2]  
         ruleAskingNewLayer['rulename'] = layerAnswer[3] 
         cursorOffset = int(layerAnswer[4])
@@ -155,15 +156,19 @@ def new_text():
             tokenText = token.text
             tokenPos = token.pos_
 
+        print('layer count: {}'.format(len(stack)))
+
         curBurst['tokens'].append(tokenText)
         # pdb.set_trace()
-        if tokenText in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex
+        print('MAIN: prev layer trigger WORDS {}'.format(prevLayerTriggerWords['words']))
+        if tokenText in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex          
             # pdb.set_trace()
             allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
             stack.pop() #fine layer
             if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
                 #TODO: forse sto metodo neanche serve.. aggiornare lo string format dico... aveva senso nel find & replace, ma qua non saprei....
                 eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
+                # resetPrevLayerStatusVars()
                 # pdb.set_trace()
                 # if eventualCursorMovement is not None and eventualCursorMovement != 0:
                 #     if eventualCursorMovement > 0:
@@ -171,11 +176,9 @@ def new_text():
                 #         keyboard.type('__mf{}'.format(eventualCursorMovement))
                 #     else:
                 #         time.sleep(1)
-                #         keyboard.type('__mb{}'.format(eventualCursorMovement))
-                        
-                
-            """Aggiornamento stato"""
-            resetPrevLayerStatusVars()
+                #         keyboard.type('__mb{}'.format(eventualCursorMovement)) 
+            # """Aggiornamento stato"""
+            # resetPrevLayerStatusVars()
 
         # else: #questo token mi fa restare su questo layer
         newLayerIfNeeded()

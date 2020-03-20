@@ -52,7 +52,10 @@ class Potenza(MathTopic):
         if rulename is None: #se è None sono all'inizio del format
             return (2,True) #perchè deve passare i caratter '^' e '{'
         elif rulename == 'power': #vuol dire che col cursore sono al termine della scrittura del corpo della potenza
-            return (2,True)
+            if calledFromLayer:
+                return (1,True)
+            else:
+                return(2,True)
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)
@@ -344,7 +347,7 @@ class ChiusaParentesiQuadra(MathTopic):
         super().__init__(answerPoolSetter,ChiusaParentesiQuadra.get_classname())
         self._g = self.createGrammar()
         self._cursorPos = 0
-        self.entryRuleWords = ["chiusa","chiudi"]
+        self.entryRuleWords = ["chiusa","chiudi","quadra","parentesi"]
         self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
 
     @staticmethod
@@ -389,7 +392,7 @@ class ApertaParentesiGraffa(MathTopic):
         super().__init__(answerPoolSetter,ApertaParentesiGraffa.get_classname())
         self._g = self.createGrammar()
         self._cursorPos = 0
-        self.entryRuleWords = ["aperta","apri"]
+        self.entryRuleWords = ["aperta","apri","parentesi","graffa"]
         self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
 
     @staticmethod
@@ -433,7 +436,7 @@ class ChiusaParentesiGraffa(MathTopic):
         super().__init__(answerPoolSetter,ChiusaParentesiGraffa.get_classname())
         self._g = self.createGrammar()
         self._cursorPos = 0
-        self.entryRuleWords = ["chiusa","chiudi"]
+        self.entryRuleWords = ["chiusa","chiudi","parentesi","graffa"]
         self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
 
     @staticmethod

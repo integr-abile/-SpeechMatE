@@ -228,7 +228,7 @@ class Frazione(MathTopic):
         if rulename == 'fraction_numerator':
             if not calledFromLayer:
                 return (6,False)
-            else: #called from layer per l'ending rule del numeratore
+            else: 
                 return(0,False) 
         elif rulename == 'fraction_denominator':
             if not calledFromLayer:
