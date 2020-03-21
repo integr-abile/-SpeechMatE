@@ -50,9 +50,9 @@ class Seno(MathTopic):
         """
         if rulename == 'seno':
             if calledFromLayer:
-                return (2,True)
+                return (2,True,None)
             else: #called from module
-                return (5,True) #True perchè ho finito questa regola
+                return (5,True,None) #True perchè ho finito questa regola
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)
@@ -104,9 +104,9 @@ class Coseno(MathTopic):
         """
         if rulename == 'coseno':
             if calledFromLayer:
-                return (2,True)
+                return (2,True,None)
             else: #called from module
-                return (5,True) #True perchè ho finito questa regola
+                return (5,True,None) #True perchè ho finito questa regola
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)
@@ -160,9 +160,9 @@ class Tangente(MathTopic):
         """
         if rulename == 'tangente':
             if calledFromLayer:
-                return (2,True) #True sta per isEndingRule
+                return (2,True,None) #True sta per isEndingRule, il terzo parametro sta per la prossima regola metchata
             else: #called from module
-                return (5,True) #True perchè ho finito questa regola
+                return (5,True,None) #True perchè ho finito questa regola
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)

@@ -31,6 +31,8 @@ ruleAskingNewLayer = {'rulename':None} #servirà al modulo per sapere come muove
 lastTextSent = {'text':''} #tiene conto dell'ultimo testo inviato a texstudio
 numBurstTokens = {'length':-1}
 
+layer = Layer()
+
 def manageLayerAnswer(layerAnswer):
     """
     Punto nel quale si svolgono effettivamente le azioni comunicando anche con texstudio
@@ -40,7 +42,7 @@ def manageLayerAnswer(layerAnswer):
         pass
 
     elif layerAnswer[0] == LayerMsg.TEXT:
-        txtToSend = layerAnswer[1]
+        txtToSend = layerAnswer[1] if layerAnswer[1] != None else ""
         keyboard.type(txtToSend)
         app.logger.debug('txt for texstudio: {}'.format(txtToSend))
         """Aggiornamento stato"""
@@ -49,10 +51,11 @@ def manageLayerAnswer(layerAnswer):
 
     elif layerAnswer[0] == LayerMsg.END_THIS_LAYER:
         print('finishing layer without text')
-        allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
-        stack.pop() #fine layer
+        # allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
+        # pdb.set_trace()
         if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
-            eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
+            res = layer.updateGrammarStringFormat("",stack[-1]['grammarName'],stack[-1]['ruleName'])
+            eventualCursorMovement = res[0] #dato che è un end layer mi interessa solo di chiuderlo muovendo il cursore xkè comunque una end rule non ci sarà
             # pdb.set_trace()
             if eventualCursorMovement is not None and eventualCursorMovement != 0:
                 if eventualCursorMovement > 0:
@@ -60,6 +63,7 @@ def manageLayerAnswer(layerAnswer):
                 else:
                     keyboard.type('__mb{}'.format(eventualCursorMovement))
         # """Aggiornamento stato"""
+        stack.pop() #fine layer
         # resetPrevLayerStatusVars()
 
     elif layerAnswer[0] == LayerMsg.END_THIS_LAYER_WITH_TEXT:
@@ -95,9 +99,11 @@ def manageLayerAnswer(layerAnswer):
         # resetPrevLayerStatusVars()
 
     elif layerAnswer[0] == LayerMsg.NEW_LAYER_REQUEST:
-        prevLayerTriggerWords['words'] = layerAnswer[1] if len(layerAnswer[1])>0 else prevLayerTriggerWords['words'] #aggiorno le parole per risollevare il layer che sto portando in secondo posto
+        # pdb.set_trace()
+        prevLayerTriggerWords['words'] = layerAnswer[1] #aggiorno le parole per risollevare il layer che sto portando in secondo posto
         moduleAskingNewLayer['module_name'] = layerAnswer[2]  
         ruleAskingNewLayer['rulename'] = layerAnswer[3] 
+        stack.append({'ruleName':ruleAskingNewLayer['rulename'],'grammarName':moduleAskingNewLayer['module_name'],'triggerWords':prevLayerTriggerWords['words']})
         cursorOffset = int(layerAnswer[4])
         # pdb.set_trace()
         tag = layerAnswer[5] #cosa scrivere prima di spostare il cursore
@@ -112,6 +118,7 @@ def manageLayerAnswer(layerAnswer):
                     keyboard.type('__mb{}'.format(carryHomeLength))
                 else:
                     keyboard.type('__mf{}'.format(carryHomeLength))
+        # pdb.set_trace()
         if cursorOffset != 0: #può essere anche negativo se devo tornare indietro
             if cursorOffset > 0:
                 #dico a texstudio di andare avanti col cursore
@@ -119,7 +126,7 @@ def manageLayerAnswer(layerAnswer):
             else: #strettamente minore di 0
                 #dico a texstudio di andare indietro col cursore
                 keyboard.type('__mb{}'.format(cursorOffset))
-        stack.append(Layer())
+        # stack.append(Layer())
         """Aggiornamento stato"""
         lastTextSent['text'] = tag if tag != None else lastTextSent['text']
         lastAction['action'] = Action.DETTATURA
@@ -129,8 +136,8 @@ def manageLayerAnswer(layerAnswer):
         keyboard.type(layerAnswer[2]) #[2] è il tag della farthes leaf
         idx_start = layerAnswer[1]
         for i in range(idx_start,len(curBurst['tokens'])): #non vado oltre dove sono già arrivato
-            newLayerIfNeeded()
-            res = stack[-1].handleRawText((curBurst['tokens'][i],'NA'),i,numBurstTokens['length'])
+            # newLayerIfNeeded()
+            res = layer.handleRawText((curBurst['tokens'][i],'NA'),i,numBurstTokens['length'])
             time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
             manageLayerAnswer(res)
 
@@ -144,7 +151,7 @@ def new_text():
     doc = nlp(last_burst)
     numBurstTokens['length'] = len(doc)
 
-    newLayerIfNeeded()
+    # newLayerIfNeeded()
     
     for idx,token in enumerate(doc):
         tokenText = ''
@@ -160,39 +167,39 @@ def new_text():
 
         curBurst['tokens'].append(tokenText)
         # pdb.set_trace()
-        print('MAIN: prev layer trigger WORDS {}'.format(prevLayerTriggerWords['words']))
-        if tokenText in prevLayerTriggerWords['words']: #se questo token fa sì di triggerare il layer precedente. La parola che triggera un cambio layer non porta con se testo latex          
-            # pdb.set_trace()
-            allTextSentByTopLayer = stack[-1].allTextSent #prendo tutto quanto detto nel top-layer
-            stack.pop() #fine layer
-            if len(stack) > 0: #se quello che ho appena tolto non era l'unico layer
-                #TODO: forse sto metodo neanche serve.. aggiornare lo string format dico... aveva senso nel find & replace, ma qua non saprei....
-                eventualCursorMovement = stack[-1].updateGrammarStringFormat(allTextSentByTopLayer,moduleAskingNewLayer['module_name'],ruleAskingNewLayer['rulename'])
-                # resetPrevLayerStatusVars()
+        
+        if len(stack)>0:
+            print('MAIN: prev layer trigger WORDS {}'.format(stack[-1]['triggerWords']))
+            if tokenText in stack[-1]['triggerWords']: #se questo token fa sì di triggerare il layer precedente.          
                 # pdb.set_trace()
-                # if eventualCursorMovement is not None and eventualCursorMovement != 0:
-                #     if eventualCursorMovement > 0:
-                #         time.sleep(1)
-                #         keyboard.type('__mf{}'.format(eventualCursorMovement))
-                #     else:
-                #         time.sleep(1)
-                #         keyboard.type('__mb{}'.format(eventualCursorMovement)) 
-            # """Aggiornamento stato"""
-            # resetPrevLayerStatusVars()
-
-        # else: #questo token mi fa restare su questo layer
-        newLayerIfNeeded()
-        res = stack[-1].handleRawText((tokenText,tokenPos),idx,numBurstTokens['length'])
-        time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
-        manageLayerAnswer(res)
+                res = layer.updateGrammarStringFormat("",stack[-1]['grammarName'],stack[-1]['ruleName'])
+                eventualCursorMovement = res[0]
+                nextRule = res[1]
+                # pdb.set_trace()
+                if nextRule[0] != LayerMsg.NEW_LAYER_REQUEST: #altrimenti lo spostamento lo gestisco già in manageLayerAnswer
+                    if eventualCursorMovement is not None and eventualCursorMovement != 0:
+                        if eventualCursorMovement > 0:
+                            time.sleep(1)
+                            keyboard.type('__mf{}'.format(eventualCursorMovement))
+                        else:
+                            time.sleep(1)
+                            keyboard.type('__mb{}'.format(eventualCursorMovement)) 
+                stack.pop()
+                manageLayerAnswer(nextRule)
+            else:
+                res = layer.handleRawText((tokenText,tokenPos),idx,numBurstTokens['length'])
+                time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
+                manageLayerAnswer(res)
+        else:
+            # else: #questo token mi fa restare su questo layer
+            # newLayerIfNeeded()
+            res = layer.handleRawText((tokenText,tokenPos),idx,numBurstTokens['length'])
+            time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
+            manageLayerAnswer(res)
     return '',status.HTTP_200_OK
 
 """UTILITY METHODS"""
-
-def newLayerIfNeeded():
-    """Crea un nuovo layer se lo stack è vuoto"""
-    if len(stack) == 0:
-        stack.append(Layer())
+    
 
 def resetPrevLayerStatusVars():
     prevLayerTriggerWords['words'] = []

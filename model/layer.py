@@ -55,7 +55,7 @@ class Layer:
 
 
          #controllo parole di trigger, altrimenti redirect back come TEXT al server
-        allPotentialGrammars = []
+        print("LAYER: next words list {}".format(self.nextWordsDictToList()))
         if text_pos[0] not in self.nextWordsDictToList():
             last_words_to_say = ''
             if len(self._leafRuleMatched) > 0:
@@ -64,7 +64,6 @@ class Layer:
                 farthest_leaf_index = farthest_leaf['idx']
                 farthest_leaf_tag = farthest_leaf['tag']
                 #reset perchè è come se avessi metchato una foglia e quindi sarebbe equiparabile ad un end layer
-                self._leafRuleMatched = []
                 self.initAll()
                 return(LayerMsg.REWIND,farthest_leaf_index+1,farthest_leaf_tag)
             else:
@@ -196,10 +195,28 @@ class Layer:
             # pdb.set_trace()
             self._allNextRuleWordsDict[grammarName] = allTriggerWords
             #faccio arrivare al server le allTriggerWords perchè deve potermi riattivare con queste parole e il controllo lo farà lui
+            self.initAll()
             return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)
             
         self._lastMsgTypeSent = LayerMsg.TEXT
         return (LayerMsg.TEXT,"shouldn't happened")
+
+
+    def redirectRuleToSrv(self,rule, grammar_name, cursor_offset):
+        if rule is None:
+            return (LayerMsg.WAIT,None)
+        if rule.request_new_layer:
+            allTriggerWords = rule.next_rules_trigger_words
+            grammarName = grammar_name
+            rulenameRequestingNewLayer = rule.name
+            cursorOffset = cursor_offset
+            tag = rule.tags[0] if len(rule.tags) > 0 else None
+            carryHomeLength = rule.go_to_begin if hasattr(rule,'go_to_begin') else None
+            self._lastMsgTypeSent = LayerMsg.NEW_LAYER_REQUEST
+            self.initAll()
+            return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)
+        else:
+            return (LayerMsg.TEXT,rule.tags[0] if len(rule.tags) > 0 else None)
 
 
 
@@ -224,9 +241,10 @@ class Layer:
                         # pdb.set_trace()
                         cursorOffset = res[0]
                         isEndingRule = res[1]
+                        nextRule = res[2]
                         if isEndingRule: #resetto tutte le grammatiche
                             self.initAll()
-                        return cursorOffset
+                        return (cursorOffset,self.redirectRuleToSrv(nextRule,grammarName,cursorOffset))
                         
 
     #-------------------- UTILITY ---------------------------

@@ -53,9 +53,9 @@ class Potenza(MathTopic):
             return (2,True) #perchè deve passare i caratter '^' e '{'
         elif rulename == 'power': #vuol dire che col cursore sono al termine della scrittura del corpo della potenza
             if calledFromLayer:
-                return (1,True)
+                return (1,True,None)
             else:
-                return(2,True)
+                return(2,True,None)
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)

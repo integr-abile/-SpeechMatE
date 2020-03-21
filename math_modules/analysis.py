@@ -227,14 +227,14 @@ class Frazione(MathTopic):
         """
         if rulename == 'fraction_numerator':
             if not calledFromLayer:
-                return (6,False)
+                return (6,False,None)
             else: 
-                return(0,False) 
+                return(2,False,self._g.get_rule_from_name("fraction_denominator")) #ritorno la regola successiva della catena
         elif rulename == 'fraction_denominator':
             if not calledFromLayer:
-                return (2,True) 
+                return (0,True,None) 
             else:
-                return(2,True)
+                return(2,True,None)
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)

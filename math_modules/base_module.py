@@ -43,12 +43,13 @@ class MathTopic:
 
     def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): #override se non stiamo parlando di una foglia
         """True o False indica che dopo lo spostamento del cursore questa regola è giunta al capolinea e quindi chiede al layer di riabilitare tutte le regole"""
-        return (0,False)
+        return (0,True,None)
 
 #-----------------------------------------------------------------------
 
 
-    def getLatexAlternatives(self,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token col suo POS
+    #Chiamato dal layer come codice multithread
+    def getLatexAlternatives(self,last_token): #Chiamato su nuovo testo in input. Qua arriva token per token col suo POS. 
 
         """CHECK INPUT PRELIMINARE"""
         if self._outOfPlayFlag:
@@ -105,6 +106,8 @@ class MathTopic:
             self.sendNoMatchNotification()
         else:
             self.sendWaitRequest({'next_rules_words':next_rules_words})
+
+
         
 
     
