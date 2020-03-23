@@ -50,7 +50,7 @@ class Seno(MathTopic):
         """
         if rulename == 'seno':
             if calledFromLayer:
-                return (2,True,None)
+                return (1,True,None)
             else: #called from module
                 return (5,True,None) #True perchè ho finito questa regola
     
@@ -104,7 +104,7 @@ class Coseno(MathTopic):
         """
         if rulename == 'coseno':
             if calledFromLayer:
-                return (2,True,None)
+                return (1,True,None)
             else: #called from module
                 return (5,True,None) #True perchè ho finito questa regola
     
@@ -160,7 +160,7 @@ class Tangente(MathTopic):
         """
         if rulename == 'tangente':
             if calledFromLayer:
-                return (2,True,None) #True sta per isEndingRule, il terzo parametro sta per la prossima regola metchata
+                return (1,True,None) #True sta per isEndingRule, il terzo parametro sta per la prossima regola metchata
             else: #called from module
                 return (5,True,None) #True perchè ho finito questa regola
     

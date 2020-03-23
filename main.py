@@ -115,16 +115,20 @@ def manageLayerAnswer(layerAnswer):
             if carryHomeLength is not None:
                 carryHomeLength = int(carryHomeLength)
                 if carryHomeLength > 0:
+                    time.sleep(1)
                     keyboard.type('__mb{}'.format(carryHomeLength))
                 else:
+                    time.sleep(1)
                     keyboard.type('__mf{}'.format(carryHomeLength))
         # pdb.set_trace()
         if cursorOffset != 0: #può essere anche negativo se devo tornare indietro
             if cursorOffset > 0:
                 #dico a texstudio di andare avanti col cursore
+                time.sleep(1)
                 keyboard.type('__mf{}'.format(cursorOffset))
             else: #strettamente minore di 0
                 #dico a texstudio di andare indietro col cursore
+                time.sleep(1)
                 keyboard.type('__mb{}'.format(cursorOffset))
         # stack.append(Layer())
         """Aggiornamento stato"""
