@@ -59,7 +59,7 @@ class Layer:
         if text_pos[0] not in self.nextWordsDictToList():
             last_words_to_say = ''
             if len(self._leafRuleMatched) > 0:
-                # pdb.set_trace()
+                pdb.set_trace()
                 farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
                 farthest_leaf_index = farthest_leaf['idx']
                 farthest_leaf_tag = farthest_leaf['tag']

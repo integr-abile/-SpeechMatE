@@ -251,7 +251,7 @@ class Frazione(MathTopic):
 
 #funzione generatrice. Si chiamerà così in tutti i moduli per convenzione
 def generateGrammars(answerPoolSetter):
-    grammars = [PiuMeno(answerPoolSetter),
+    grammars = [#PiuMeno(answerPoolSetter),
                 Pedice(answerPoolSetter),
                 Frazione(answerPoolSetter),
                 ValoreAssoluto(answerPoolSetter)] 
