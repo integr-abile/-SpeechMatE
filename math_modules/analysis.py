@@ -234,7 +234,7 @@ class Frazione(MathTopic):
             if not calledFromLayer:
                 return (0,True,None) 
             else:
-                return(2,True,None)
+                return(1,True,None)
     
     def getLatexAlternatives(self, last_token):
         return super().getLatexAlternatives(last_token)
@@ -251,7 +251,7 @@ class Frazione(MathTopic):
 
 #funzione generatrice. Si chiamerà così in tutti i moduli per convenzione
 def generateGrammars(answerPoolSetter):
-    grammars = [#PiuMeno(answerPoolSetter),
+    grammars = [PiuMeno(answerPoolSetter),
                 Pedice(answerPoolSetter),
                 Frazione(answerPoolSetter),
                 ValoreAssoluto(answerPoolSetter)] 
