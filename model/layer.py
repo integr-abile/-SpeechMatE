@@ -48,7 +48,7 @@ class Layer:
                 self.allTextSent +='{}'.format(farthest_leaf)
                 self.initAll()
                 self._lastMsgTypeSent = LayerMsg.TEXT
-                return (LayerMsg.TEXT,farthest_leaf) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
+                return (LayerMsg.TEXT,farthest_leaf,0) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
             else: #nessuna regola foglia è stata finora metchata
                 self.initAll()
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER
@@ -122,9 +122,10 @@ class Layer:
                                 if all([elem[4]['leaf'] == True for elem in relevant_answers]):
                                     self.allTextSent +='{}'.format(candidate_transcription[0]) #posso prendere [0] perchè tanto sono tutti uguali
                                     #non aggiorno lo stato perchè tanto adesso finirà il layer
+                                    eventualLeafEndCursorMovement = [elem[5] for elem in relevant_answers][0]
                                     self.initAll()
                                     self._lastMsgTypeSent = LayerMsg.TEXT
-                                    return (LayerMsg.TEXT,candidate_transcription[0])
+                                    return (LayerMsg.TEXT,candidate_transcription[0],eventualLeafEndCursorMovement)
                                 else: #non sono tutte foglie
                                     self.allTextSent +='{}'.format(candidate_transcription[0])
                                     #aggiorno lo stato delle trigger words
@@ -134,8 +135,9 @@ class Layer:
                                         # pdb.set_trace()
                                         if answer[4]['leaf'] == False:
                                             self._allNextRuleWordsDict[grammarName] = answer[2]['next_rules_words']
+                                    eventualLeafEndCursorMovement = [elem[5] for elem in relevant_answers][0]
                                     self._lastMsgTypeSent = LayerMsg.TEXT
-                                    return (LayerMsg.TEXT,candidate_transcription[0])
+                                    return (LayerMsg.TEXT,candidate_transcription[0],eventualLeafEndCursorMovement)
                             else: #effettivamente c'è ancora qualche messaggio NO_MATCH
                                 #salvo lo stato delle grammatiche che hanno metchato e ritorno wait
                                 for answer in relevant_answers:
@@ -156,13 +158,15 @@ class Layer:
                             if checkAllArrayElementsEquals(candidatesDesWithoutNone):
                                 if all(elem[4]['leaf'] == True for elem in answersWithoutNoMatch):
                                     self.allTextSent +='{}'.format(candidatesDesWithoutNone[0])
+                                    eventualLeafEndCursorMovement = [elem[5] for elem in answersWithoutNoMatch][0]
                                     self.initAll()
                                     self._lastMsgTypeSent = LayerMsg.TEXT
-                                    return (LayerMsg.TEXT,candidatesDesWithoutNone[0])
+                                    return (LayerMsg.TEXT,candidatesDesWithoutNone[0],eventualLeafEndCursorMovement)
                                 else:
                                     self.allTextSent +='{}'.format(candidatesDesWithoutNone[0])
+                                    eventualLeafEndCursorMovement = [elem[5] for elem in answersWithoutNoMatch][0]
                                     self._lastMsgTypeSent = LayerMsg.TEXT
-                                    return (LayerMsg.TEXT,candidatesDesWithoutNone[0])
+                                    return (LayerMsg.TEXT,candidatesDesWithoutNone[0],eventualLeafEndCursorMovement)
                             else: #se anche nell'ultimo token non c'è coerenza in quello che scriverei
                                 for answer in answersWithoutNoMatch:
                                     grammarName = answer[3]
@@ -208,7 +212,7 @@ class Layer:
             return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)
             
         self._lastMsgTypeSent = LayerMsg.TEXT
-        return (LayerMsg.TEXT,"shouldn't happened")
+        return (LayerMsg.TEXT,"shouldn't happened",0)
 
 
     def redirectRuleToSrv(self,rule, grammar_name, cursor_offset):
@@ -225,7 +229,8 @@ class Layer:
             self.initAll()
             return (LayerMsg.NEW_LAYER_REQUEST,allTriggerWords,grammarName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)
         else:
-            return (LayerMsg.TEXT,rule.tags[0] if len(rule.tags) > 0 else None)
+            eventualCursorMovement = rule.leaf_end_cursor_movement if hasattr(rule,'leaf_end_cursor_movement') else 0
+            return (LayerMsg.TEXT,rule.tags[0] if len(rule.tags) > 0 else None,eventualCursorMovement)
 
 
 
@@ -291,7 +296,7 @@ class Layer:
             self.allTextSent += '{}'.format(text_pos[0])
             last_words_to_say += '{}'.format(text_pos[0])
             self.initAll() #resetto perchè ora un comando (anche se non compariva nella grammatica, è stato dato.. che sia un numero o un monomio)
-            return (LayerMsg.TEXT,last_words_to_say)
+            return (LayerMsg.TEXT,last_words_to_say,0)
 
 
         

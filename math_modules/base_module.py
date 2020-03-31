@@ -17,9 +17,9 @@ class MathTopic:
 
 #------------------SENDING MESSAGE TO LAYER------------------------------
 #tutti i text indice 1, tutti next_rules_words indice 2, tutti grammar_name indice 3
-    def sendLatexText(self,text,node_type_info={'leaf':False},next_rules_words={'next_rules_words':[]}):
+    def sendLatexText(self,text,leafEndCursorMovement,node_type_info={'leaf':False},next_rules_words={'next_rules_words':[]}):
         """node_type_info è un dizionario {'leaf':bool} (di default leaf:False) che specifica se la regola triggerata è una foglia oppure no"""
-        self._answerPoolSetter((ModuleMsg.TEXT,text,next_rules_words,self.moduleName,node_type_info))
+        self._answerPoolSetter((ModuleMsg.TEXT,text,next_rules_words,self.moduleName,node_type_info,leafEndCursorMovement))
 
     def postNewLayerRequest(self,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength,next_rules_words={'next_rules_words':[]}):
         self._answerPoolSetter((ModuleMsg.NEW_LAYER_REQUEST,None,next_rules_words,self.moduleName,rulenameRequestingNewLayer,cursorOffset,tag,carryHomeLength)) 
@@ -72,6 +72,7 @@ class MathTopic:
         rulenameRequestingNewLayer = None #servirà per il calcolo dell'offset del cursore
         tagOfRulenameRequestingNewLayer = None #perchè tra tutti i tag (se esistono cmq ho fatto male la grammatica) questo deve avere la precedenza. Può anche non esistere
         carryHomeLength = -1 #se un comando specifica di quanto tornare indietro prima di far avanzare il cursore 
+        leafEndCursorMovement = 0 #se è stata metchata una foglia che ha quest'attributo corrisponde a un movimento del cursore dopo averla scritta
 
         for i in range(1,len(self._buffer)+1): #+1 perchè andrò indietro con gli indici
             matched_rules = self._g.find_matching_rules(' '.join(self._buffer[-i:])) #qua creo ad ogni iterazione stringhe sempre più lunghe partendo dal fondo
@@ -81,6 +82,8 @@ class MathTopic:
                 # pdb.set_trace()
                 if hasattr(matched_rule,'go_to_begin'):
                     carryHomeLength = matched_rule.go_to_begin
+                if(hasattr(matched_rule,'leaf_end_cursor_movement')):
+                    leafEndCursorMovement = matched_rule.leaf_end_cursor_movement
                 tags.append([tag for tag in matched_rule.matched_tags if len(matched_rule.matched_tags)>0])
                 node_types.append(matched_rule.node_type)
                 [next_rules_words.append(trigger_word) for trigger_word in matched_rule.next_rules_trigger_words]
@@ -101,7 +104,7 @@ class MathTopic:
         elif checkAllArrayElementsEquals(tags) and len(tags)>0: #se tutte le regole qua sono d'accordo su cosa scrivere in latex
             areAllMatchedRulesInternal = all(node_type == NODE_TYPE.INTERNO for node_type in node_types)
             # pdb.set_trace()
-            self.sendLatexText(tags[0],{'leaf':not areAllMatchedRulesInternal},{'next_rules_words':next_rules_words}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
+            self.sendLatexText(tags[0],leafEndCursorMovement,{'leaf':not areAllMatchedRulesInternal},{'next_rules_words':next_rules_words}) #se c'è almeno una foglia tra quelle metchate notifico foglia così il layer se la può salvare
         elif len(node_types) == 0: #nessuna regola è stata metchata
             self.sendNoMatchNotification()
         else:

@@ -11,6 +11,7 @@ from model import enums
 from model.layer import Layer
 from model.enums import LayerMsg
 from model.enums import Action
+from token_pre_processor import TokenPreProcessor
 import json
 import pdb #debug
 
@@ -20,6 +21,8 @@ nlp = it_core_news_sm.load()
 keyboard = Controller()
 with open('./util/word2num.json') as word2num_json:
     word2numDict = json.load(word2num_json)
+with open('./util/derivata_word2num.json') as derivata_word2num_json:
+    derivataWord2numDict = json.load(derivata_word2num_json)
 
 #app state
 stack = deque()
@@ -44,6 +47,13 @@ def manageLayerAnswer(layerAnswer):
     elif layerAnswer[0] == LayerMsg.TEXT:
         txtToSend = layerAnswer[1] if layerAnswer[1] != None else ""
         keyboard.type(txtToSend)
+        eventualEndCursorMovement = int(layerAnswer[2])
+        if eventualEndCursorMovement != 0:
+            if eventualEndCursorMovement > 0:
+                pressSpaceTimes(eventualEndCursorMovement)
+            else:
+                muoviCursoreIndietroDi(abs(eventualEndCursorMovement))
+            
         app.logger.debug('txt for texstudio: {}'.format(txtToSend))
         """Aggiornamento stato"""
         lastTextSent['text'] = txtToSend
@@ -115,21 +125,42 @@ def manageLayerAnswer(layerAnswer):
             if carryHomeLength is not None:
                 carryHomeLength = int(carryHomeLength)
                 if carryHomeLength > 0:
-                    time.sleep(1)
-                    keyboard.type('__mb{}'.format(carryHomeLength))
-                else:
-                    time.sleep(1)
-                    keyboard.type('__mf{}'.format(carryHomeLength))
+                    muoviCursoreIndietroDi(carryHomeLength)
+                    # if carryHomeLength > 9: #la regex di texstudio prende una sola cifra, quindi spezzetto uno spostamento del cursore lungo in tanti piccoli
+                    #     tmp_cnt = carryHomeLength
+                    #     while tmp_cnt > 9:
+                    #         time.sleep(1)
+                    #         keyboard.type('__mb9')
+                    #         tmp_cnt -= 9
+                    #     time.sleep(1)
+                    #     keyboard.type('__mb{}'.format(tmp_cnt))
+                    # else:
+                    #     time.sleep(1)
+                    #     keyboard.type('__mb{}'.format(carryHomeLength))
+                else: #se carry home length è negativo
+                    muoviCursoreAvantiDi(abs(carryHomeLength))
+                    # if abs(carryHomeLength) > 9:
+                    #     tmp_cnt = abs(carryHomeLength)
+                    #     while tmp_cnt > 9:
+                    #         time.sleep(1)
+                    #         keyboard.type('__mf9')
+                    #         tmp_cnt -= 9
+                    #     time.sleep(1)
+                    #     keyboard.type('__mf{}'.format(tmp_cnt))
+                    # time.sleep(1)
+                    # keyboard.type('__mf{}'.format(abs(carryHomeLength)))
         # pdb.set_trace()
-        if cursorOffset != 0: #può essere anche negativo se devo tornare indietro
-            if cursorOffset > 0:
-                #dico a texstudio di andare avanti col cursore
-                time.sleep(1)
-                keyboard.type('__mf{}'.format(cursorOffset))
-            else: #strettamente minore di 0
-                #dico a texstudio di andare indietro col cursore
-                time.sleep(1)
-                keyboard.type('__mb{}'.format(cursorOffset))
+        
+        if cursorOffset > 0:
+            #dico a texstudio di andare avanti col cursore
+            muoviCursoreAvantiDi(cursorOffset)
+            # time.sleep(1)
+            # keyboard.type('__mf{}'.format(cursorOffset))
+        else: #strettamente minore di 0
+            #dico a texstudio di andare indietro col cursore
+            muoviCursoreIndietroDi(abs(cursorOffset))
+            # time.sleep(1)
+            # keyboard.type('__mb{}'.format(cursorOffset))
         # stack.append(Layer())
         """Aggiornamento stato"""
         lastTextSent['text'] = tag if tag != None else lastTextSent['text']
@@ -160,13 +191,19 @@ def new_text():
     for idx,token in enumerate(doc):
         tokenText = ''
         tokenPos = ''
-        if token.text in word2numDict.keys():
+        ##############################poi dovrà andare nel TokenPreProcessor
+        
+        if token.text in word2numDict.keys(): #controllo esponenti
             tokenText = word2numDict[token.text]
             tokenPos = 'NUM'
+        elif token.text in derivataWord2numDict.keys(): #controllo derivata
+            tokenText = derivataWord2numDict[token.text]
+            tokenPos = 'ADJ'
         else:
             tokenText = token.text
             tokenPos = token.pos_
-
+        ######################################
+        
         print('layer count: {}'.format(len(stack)))
 
         curBurst['tokens'].append(tokenText)
@@ -209,6 +246,42 @@ def resetPrevLayerStatusVars():
     prevLayerTriggerWords['words'] = []
     ruleAskingNewLayer['rulename'] = None
     moduleAskingNewLayer['module_name'] = None
+
+def muoviCursoreAvantiDi(num_caratteri):
+    if num_caratteri == 0:
+        return
+    if num_caratteri > 9:
+        tmp_cnt = abs(num_caratteri)
+        while tmp_cnt > 9:
+            time.sleep(1)
+            keyboard.type('__mf9')
+            tmp_cnt -= 9
+        time.sleep(1)
+        keyboard.type('__mf{}'.format(tmp_cnt))
+    else:
+        time.sleep(1)
+        keyboard.type('__mf{}'.format(abs(num_caratteri)))
+
+def pressSpaceTimes(times):
+    for i in range(0,times):
+        time.sleep(1)
+        keyboard.press(Key.space)
+
+def muoviCursoreIndietroDi(num_caratteri):
+    if num_caratteri == 0:
+        return
+    if num_caratteri > 9:
+        tmp_cnt = abs(num_caratteri)
+        while tmp_cnt > 9:
+            time.sleep(1)
+            keyboard.type('__mb9')
+            tmp_cnt -= 9
+        time.sleep(1)
+        keyboard.type('__mb{}'.format(tmp_cnt))
+    else:
+        time.sleep(1)
+        keyboard.type('__mb{}'.format(abs(num_caratteri)))
+
 
 
 
