@@ -26,6 +26,7 @@ class Seno(MathTopic):
         setattr(sinRule,'request_new_layer',True)
         setattr(sinRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
         setattr(sinRule,'is_entry_rule',True)
+        setattr(sinRule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
         g.add_rule(sinRule)
@@ -80,6 +81,7 @@ class Coseno(MathTopic):
         setattr(cosineRule,'request_new_layer',True)
         setattr(cosineRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
         setattr(cosineRule,'is_entry_rule',True)
+        setattr(cosineRule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
         g.add_rule(cosineRule)
@@ -136,6 +138,7 @@ class Tangente(MathTopic):
         setattr(tanRule,'request_new_layer',True)
         setattr(tanRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
         setattr(tanRule,'is_entry_rule',True)
+        setattr(tanRule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
         g.add_rule(tanRule)

@@ -48,7 +48,7 @@ class Layer:
                 self.allTextSent +='{}'.format(farthest_leaf)
                 self.initAll()
                 self._lastMsgTypeSent = LayerMsg.TEXT
-                return (LayerMsg.TEXT,farthest_leaf,0) #farthest_leaf dict {'tag':'...','idx':3}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
+                return (LayerMsg.TEXT,farthest_leaf,0) #farthest_leaf dict {'tag':'...','idx':3,'leaf_end_cur_mov:1}. Gli passo anche l'idx perchè almeno sa che la parte restante del testo è free text
             else: #nessuna regola foglia è stata finora metchata
                 self.initAll()
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER
@@ -88,7 +88,7 @@ class Layer:
             msg = self._answersPool.popMessage()
             if msg[0]==ModuleMsg.TEXT:
                 if msg[4]['leaf'] == True:
-                    self._leafRuleMatched.append({'tag':msg[1],'idx':idx}) #[1] è l'indice nel quale c'è l'effettivo testo in latex
+                    self._leafRuleMatched.append({'tag':msg[1],'idx':idx,'leaf_end_cur_mov':msg[5]}) #[1] è l'indice nel quale c'è l'effettivo testo in latex
             answers.append(msg)
         
         print('answers: {}'.format(answers))
@@ -288,8 +288,9 @@ class Layer:
             farthest_leaf = sorted(self._leafRuleMatched,key=lambda rule:rule['idx'],reverse=True)[0] #prendo quella che ho metchato più in là nel burst
             farthest_leaf_index = farthest_leaf['idx']
             farthest_leaf_tag = farthest_leaf['tag']
+            farthest_leaf_end_cur_mov = farthest_leaf['leaf_end_cur_mov']
             self.initAll()
-            return(LayerMsg.REWIND,farthest_leaf_index+1,farthest_leaf_tag)
+            return(LayerMsg.REWIND,farthest_leaf_index+1,farthest_leaf_tag,farthest_leaf_end_cur_mov)
         else:
             #redirect back
             self._lastMsgTypeSent = LayerMsg.TEXT

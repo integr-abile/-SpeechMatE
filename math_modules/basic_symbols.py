@@ -113,6 +113,7 @@ class Diverso(MathTopic):
         setattr(neqRule,'request_new_layer',False)
         setattr(neqRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
         setattr(neqRule,'is_entry_rule',True)
+        setattr(neqRule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
         g.add_rule(neqRule)
@@ -534,6 +535,7 @@ class Diviso(MathTopic):
         setattr(divideRule,'request_new_layer',False)
         setattr(divideRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
         setattr(divideRule,'is_entry_rule',True)
+        setattr(divideRule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
         g.add_rule(divideRule)
@@ -614,6 +616,7 @@ class Per(MathTopic):
         setattr(multiplication_rule,'request_new_layer',False) #tiene conto del fatto che il match di questa regola possa richiedere la creazione di un nuovo layer
         setattr(multiplication_rule,'next_rules_trigger_words',[]) #tiene conto del grafo della grammatica. Non mettere None se no salta tutto perchè None non è iterabile
         setattr(multiplication_rule,'is_entry_rule',True) #tiene conto se questa regola è un entry point di un grafo
+        setattr(multiplication_rule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
         g.add_rule(multiplication_rule)

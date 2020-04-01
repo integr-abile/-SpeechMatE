@@ -120,7 +120,8 @@ def manageLayerAnswer(layerAnswer):
         carryHomeLength = layerAnswer[6] #se != None indica che devo muovere il cursore indietro di una certa quantità prima di applicare cursorOffset
         if tag is not None:
             keyboard.type(tag)
-            keyboard.type('__mb{}'.format(len(tag))) #RITORNO A INIZIO COMANDO (perchè l'offset lo do rispetto a quello)
+            muoviCursoreIndietroDi(len(tag)) #RITORNO A INIZIO COMANDO (perchè l'offset lo do rispetto a quello)
+            # keyboard.type('__mb{}'.format(len(tag))) 
         else:
             if carryHomeLength is not None:
                 carryHomeLength = int(carryHomeLength)
@@ -169,6 +170,12 @@ def manageLayerAnswer(layerAnswer):
         #faccio da server dall'index indicato fino a dove è arrivato al momento il burst. Poi faccio riprendere normalmente il server
         # pdb.set_trace()
         keyboard.type(layerAnswer[2]) #[2] è il tag della farthes leaf
+        eventualEndCursorMovement = int(layerAnswer[3])
+        if eventualEndCursorMovement != 0:
+            if eventualEndCursorMovement > 0:
+                pressSpaceTimes(eventualEndCursorMovement)
+            else:
+                muoviCursoreIndietroDi(abs(eventualEndCursorMovement))
         idx_start = layerAnswer[1]
         for i in range(idx_start,len(curBurst['tokens'])): #non vado oltre dove sono già arrivato
             # newLayerIfNeeded()

@@ -17,15 +17,16 @@ class PiuMeno(MathTopic):
         short_expansion.tag = "\pm"
         long_expansion = Literal("più o meno")
         long_expansion.tag = "\pm"
-        openParentesisRule = PublicRule("open_parenthesis",AlternativeSet(short_expansion,long_expansion))
+        piuMenoRule = PublicRule("open_parenthesis",AlternativeSet(short_expansion,long_expansion))
         #setattr section
-        setattr(openParentesisRule,'node_type',NODE_TYPE.FOGLIA)
-        setattr(openParentesisRule,'request_new_layer',False)
-        setattr(openParentesisRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
-        setattr(openParentesisRule,'is_entry_rule',True)
+        setattr(piuMenoRule,'node_type',NODE_TYPE.FOGLIA)
+        setattr(piuMenoRule,'request_new_layer',False)
+        setattr(piuMenoRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(piuMenoRule,'is_entry_rule',True)
+        setattr(piuMenoRule,'leaf_end_cursor_movement',1) #una foglia può specificare questo attributo per dire che dopo di lei il cursore deve muoversi di un tot (tipicamente per uno spazio)
         #grammar creation section
         g = Grammar()
-        g.add_rule(openParentesisRule)
+        g.add_rule(piuMenoRule)
 
         return g
 
@@ -284,6 +285,84 @@ class Frazione(MathTopic):
 
 
 
+class IntegraleDefinito(MathTopic):
+    def __init__(self,answerPoolSetter):
+        super().__init__(answerPoolSetter,IntegraleDefinito.get_classname())
+        self._g = self.createGrammar()
+        self._cursorPos = 0
+        #rule template (per regole complesse con filler). Le foglie come i simboli semplici non ce l'hanno
+        self._ruleTemplate = '\\int\\limits_{0}^{1}'
+        self._body0 = ''
+        self._body1 = ''
+        self.entryRuleWords = ["integrale","da"]
+        self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
+        self._lastRuleMatchedName = None #mi serve per sapere dov'è il cursore. soprattutto utile in caso in cui il comando sia spezzettato su più parentesi
+        
+    @staticmethod
+    def createGrammar():
+        integraleDefinitoExpansion = Literal("integrale da")
+        integraleDefinitoExpansion.tag = "\\int\\limits_{}^{}"
+        definedIntegralRule = PublicRule("defined_integral_main",integraleDefinitoExpansion)
+        integraleDefinitoUpLimitExpansion = Literal("integrale da a")
+        integraleDefinitoUpLimitExpansion.tag = None
+        upLimitRule = PublicRule("defined_integral_limit",integraleDefinitoUpLimitExpansion)
+        #setattr section
+        setattr(definedIntegralRule,'node_type',NODE_TYPE.INTERNO)
+        setattr(definedIntegralRule,'request_new_layer',True)
+        setattr(definedIntegralRule,'next_rules_trigger_words',['a']) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(definedIntegralRule,'is_entry_rule',True)
+        setattr(definedIntegralRule,'go_to_begin',len('\\int\\limits_{}^{}')) #attributo che specifica se fare carry-home.
+        #------------------------------
+        setattr(upLimitRule,'node_type',NODE_TYPE.INTERNO)
+        setattr(upLimitRule,'request_new_layer',True)
+        setattr(upLimitRule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(upLimitRule,'is_entry_rule',False)
+
+        #grammar creation section
+        g = Grammar()
+        g.add_rules(definedIntegralRule,upLimitRule)
+        return g
+
+    @classmethod
+    def get_classname(cls):
+        return cls.__name__
+
+    def createLatexText(self,text,rulename=None):
+        #tanto non lo uso.. da togliere nel refactoring. non importa se è sbagliato
+        """Nei comandi lunghi so come interpretare text in base ai comandi già passati"""
+        return self._ruleTemplate.format(self._body0,self._body1)
+
+    def updateStringFormat(self,text,rulename):
+        #tanto non lo uso.. da togliere nel refactoring. non importa se è sbagliato
+        if rulename == 'fraction_numerator':
+            self._body0 = text
+        elif rulename == 'fraction_denominator':
+            self._body1 = text
+
+
+    def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): 
+        """
+        Data una certa regola, il modulo sapendo dov'è il cursore attualmente, può risalire a dove posizionarsi rispetto a dov'è
+        è necessario specificare se la chiamata arriva dal layer oppure no perchè se arriva dal layer denota la fine del layer, se chiamata dal modulo l'inizio
+        """
+        if rulename == 'defined_integral_main':
+            if not calledFromLayer: #called from module
+                return (13,False,None)
+            else: 
+                return(3,False,self._g.get_rule_from_name("defined_integral_limit")) #ritorno la regola successiva della catena
+        elif rulename == 'defined_integral_limit':
+            if not calledFromLayer:
+                return (0,True,None) 
+            else:
+                return(1,True,None) #per uscire dall'upper limit dell'integrale
+    
+    def getLatexAlternatives(self, last_token):
+        return super().getLatexAlternatives(last_token)
+
+
+
+
+
 
 class Sommatoria(MathTopic):
     def __init__(self,answerPoolSetter):
@@ -379,7 +458,8 @@ def generateGrammars(answerPoolSetter):
                 Frazione(answerPoolSetter),
                 ValoreAssoluto(answerPoolSetter),
                 Sommatoria(answerPoolSetter),
-                Integrale(answerPoolSetter)] 
+                Integrale(answerPoolSetter),
+                IntegraleDefinito(answerPoolSetter)] 
     entryRuleWords = [{grammar.moduleName:grammar.entryRuleWords} for grammar in grammars] #entry rule words di tutte le grammatiche
     entryRuleWordsDict = {}
     for entryRuleWord in entryRuleWords:
