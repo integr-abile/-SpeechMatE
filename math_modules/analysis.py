@@ -285,6 +285,102 @@ class Frazione(MathTopic):
 
 
 
+class Limite(MathTopic):
+    def __init__(self,answerPoolSetter):
+        super().__init__(answerPoolSetter,Limite.get_classname())
+        self._g = self.createGrammar()
+        self._cursorPos = 0
+        #rule template (per regole complesse con filler). Le foglie come i simboli semplici non ce l'hanno
+        self._ruleTemplate = '\lim{{0} \\to {1}}'
+        self._body0 = ''
+        self._body1 = ''
+        self.entryRuleWords = ["limite","per"]
+        self._nextRulesWords = self.entryRuleWords #poi questa variabile cambierà restando allineata con quella che ha anche il layer
+        self._lastRuleMatchedName = None #mi serve per sapere dov'è il cursore. soprattutto utile in caso in cui il comando sia spezzettato su più parentesi
+        
+    @staticmethod
+    def createGrammar():
+        limiteMainExpansion = Literal("limite per")
+        limiteMainExpansion.tag = "\\lim{ \\to }"
+        limiteMainRule = PublicRule("limite_main",limiteMainExpansion)
+        limiteUpP1Expansion = Literal("limite per che")
+        limiteUpP1Expansion.tag = None
+        limiteUpP1Rule = PublicRule("limite_up_p1",limiteUpP1Expansion)
+        limiteUpP2Expansion = Literal("limite per che tende")
+        limiteUpP2Expansion.tag = None
+        limiteUpP2Rule = PublicRule("limite_up_p2",limiteUpP2Expansion)
+        limiteUpP3Expansion = Literal("limite per che tende a")
+        limiteUpP3Expansion.tag = None
+        limiteUpP3Rule = PublicRule("limite_up_p3",limiteUpP3Expansion)
+
+        #setattr section
+        setattr(limiteMainRule,'node_type',NODE_TYPE.INTERNO)
+        setattr(limiteMainRule,'request_new_layer',True)
+        setattr(limiteMainRule,'next_rules_trigger_words',['che']) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(limiteMainRule,'is_entry_rule',True)
+        setattr(limiteMainRule,'go_to_begin',len('\\lim{ \\to }')) #attributo che specifica se fare carry-home.
+        #------------------------------
+        setattr(limiteUpP1Rule,'node_type',NODE_TYPE.INTERNO)
+        setattr(limiteUpP1Rule,'request_new_layer',True)
+        setattr(limiteUpP1Rule,'next_rules_trigger_words',['tende']) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(limiteUpP1Rule,'is_entry_rule',False)
+        #--------------------------------
+        setattr(limiteUpP2Rule,'node_type',NODE_TYPE.INTERNO)
+        setattr(limiteUpP2Rule,'request_new_layer',True)
+        setattr(limiteUpP2Rule,'next_rules_trigger_words',['a']) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(limiteUpP2Rule,'is_entry_rule',False)
+        #------------------------------------
+        setattr(limiteUpP3Rule,'node_type',NODE_TYPE.INTERNO)
+        setattr(limiteUpP3Rule,'request_new_layer',True)
+        setattr(limiteUpP3Rule,'next_rules_trigger_words',[]) #non mettere None se no salta tutto perchè None non è iterabile
+        setattr(limiteUpP3Rule,'is_entry_rule',False)
+
+        #grammar creation section
+        g = Grammar()
+        g.add_rules(limiteMainRule,limiteUpP1Rule,limiteUpP2Rule,limiteUpP3Rule)
+        return g
+
+    @classmethod
+    def get_classname(cls):
+        return cls.__name__
+
+    def createLatexText(self,text,rulename=None):
+        #tanto non lo uso.. da togliere nel refactoring. non importa se è sbagliato
+        """Nei comandi lunghi so come interpretare text in base ai comandi già passati"""
+        return self._ruleTemplate.format(self._body0,self._body1)
+
+    def updateStringFormat(self,text,rulename):
+        #tanto non lo uso.. da togliere nel refactoring. non importa se è sbagliato
+        if rulename == 'fraction_numerator':
+            self._body0 = text
+        elif rulename == 'fraction_denominator':
+            self._body1 = text
+
+
+    def getCursorOffsetForRulename(self,rulename,calledFromLayer=False): 
+        """
+        Data una certa regola, il modulo sapendo dov'è il cursore attualmente, può risalire a dove posizionarsi rispetto a dov'è
+        è necessario specificare se la chiamata arriva dal layer oppure no perchè se arriva dal layer denota la fine del layer, se chiamata dal modulo l'inizio
+        """
+        if rulename == 'limite_main':
+            if not calledFromLayer: #called from module
+                return (5,False,None)
+            else: 
+                return(0,False,self._g.get_rule_from_name("limite_up_p1")) #ritorno la regola successiva della catena
+        elif rulename == 'limite_up_p1':
+            return (0,False,self._g.get_rule_from_name("limite_up_p2")) 
+        elif rulename == 'limite_up_p2':
+            return (5,False,self._g.get_rule_from_name("limite_up_p3"))
+        elif rulename == 'limite_up_p3': #chiamata sul 'fine'
+            return (1,True,None)
+    
+    def getLatexAlternatives(self, last_token):
+        return super().getLatexAlternatives(last_token)
+
+
+
+
+
 class IntegraleDefinito(MathTopic):
     def __init__(self,answerPoolSetter):
         super().__init__(answerPoolSetter,IntegraleDefinito.get_classname())
@@ -459,7 +555,8 @@ def generateGrammars(answerPoolSetter):
                 ValoreAssoluto(answerPoolSetter),
                 Sommatoria(answerPoolSetter),
                 Integrale(answerPoolSetter),
-                IntegraleDefinito(answerPoolSetter)] 
+                IntegraleDefinito(answerPoolSetter),
+                Limite(answerPoolSetter)] 
     entryRuleWords = [{grammar.moduleName:grammar.entryRuleWords} for grammar in grammars] #entry rule words di tutte le grammatiche
     entryRuleWordsDict = {}
     for entryRuleWord in entryRuleWords:
