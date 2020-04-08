@@ -23,4 +23,9 @@ class ModuleMsg(Enum):
     WAIT = 2 #più regole metchate contrastanti
     NO_MATCH = 3 #nessuna regola metchata a questo giro, ma potrei metcharla in un momento successivo
     OUT_OF_PLAY = 4 #nessuna regola può più essere triggerata perchè il token che è arrivato non da spazio a match presenti e/o futuri
+
+
+class EditMsg(Enum):
+    RETRY = 0 #il master deve riprovare ad inviare lo stesso token (eventualmente inviando prima a texstudio qualcosa)
+    NEXT_TOKEN = 1 #token non appartenente a niente di accettabile. Skip
     

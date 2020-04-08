@@ -12,7 +12,8 @@ from model.layer import Layer
 from model.enums import LayerMsg
 from model.enums import Action
 from token_pre_processor import TokenPreProcessor
-from edit_modules.edit_worker import convertCommandsToTree
+from edit_modules.edit_util import convertCommandsToTree
+from edit_modules.edit_buffer import EditBuffer
 import json
 import pdb #debug
 
@@ -43,7 +44,7 @@ layer = Layer()
 
 
 #app state for edit
-
+editStateManager = EditBuffer(editGraph)
 
 def manageLayerAnswer(layerAnswer):
     """
@@ -143,7 +144,11 @@ def manageLayerAnswer(layerAnswer):
 
 @app.route('/editText',methods=['POST'])
 def new_edit_text():
-    
+    last_burst = request.json['text']
+    #qua non è come la matematica. Finito il burst si resetta lo stato perchè assumo che un comando di editing venga detto tutto di un fiato
+    burstTokens = last_burst.split()
+    for idx,token in enumerate(burstTokens):
+        editStateManager.newToken(token,idx==len(burstTokens)-1)
     return '',status.HTTP_200_OK
 
 @app.route('/mathtext',methods=['POST'])

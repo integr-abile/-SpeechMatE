@@ -2,17 +2,17 @@ import json
 import pdb
 
 def convertCommandsToTree(commandsDict):
-    print("convert....")
+    # print("convert....")
     commands = commandsDict['commands']
     res = map(convert2ArrayOfDicts,commands)
     lst = list(res)
     max_sentence_len = max([len(elem) for elem in lst])
-    print('max sentence len {}'.format(max_sentence_len))
+    # print('max sentence len {}'.format(max_sentence_len))
     toReturn = [[] for i in range(max_sentence_len)]
     for sentenceList in lst:
         for tokenDict in sentenceList:
             toReturn[int(tokenDict['idx'])].append(tokenDict)
-    print(toReturn)
+    # print(toReturn)
     return toReturn
     
 def convert2ArrayOfDicts(sentence):
