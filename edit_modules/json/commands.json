@@ -1,0 +1,3 @@
+{
+    "commands":["avanti","indietro","avanti [0-9]","indietro [0-9]","corrispondente"]
+}

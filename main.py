@@ -12,6 +12,7 @@ from model.layer import Layer
 from model.enums import LayerMsg
 from model.enums import Action
 from token_pre_processor import TokenPreProcessor
+from edit_modules.edit_worker import convertCommandsToTree
 import json
 import pdb #debug
 
@@ -24,8 +25,10 @@ with open('./util/word2num.json') as word2num_json:
     word2numDict = json.load(word2num_json)
 with open('./util/derivata_word2num.json') as derivata_word2num_json:
     derivataWord2numDict = json.load(derivata_word2num_json)
+with open('./edit_modules/json/commands.json') as commands_json:
+    editGraph = convertCommandsToTree(json.load(commands_json))
 
-#app state
+#app state for math
 stack = deque()
 curBurst = {'tokens':[]} #il burst attuale sottoforma di array di token
 lastAction = {'action':Action.NESSUNA} #si riferisce alle azioni fatte nei confronti di texstudio. uso dict se non l'informazione non viene persistita tra richieste successive
@@ -35,8 +38,12 @@ ruleAskingNewLayer = {'rulename':None} #servirà al modulo per sapere come muove
 lastTextSent = {'text':''} #tiene conto dell'ultimo testo inviato a texstudio
 numBurstTokens = {'length':-1}
 lastSaveTime = {'last_save_time':time.time()}
-
 layer = Layer()
+
+
+
+#app state for edit
+
 
 def manageLayerAnswer(layerAnswer):
     """
@@ -133,6 +140,11 @@ def manageLayerAnswer(layerAnswer):
 
 
 """SERVER INTERFACE API"""
+
+@app.route('/editText',methods=['POST'])
+def new_edit_text():
+    
+    return '',status.HTTP_200_OK
 
 @app.route('/mathtext',methods=['POST'])
 def new_text():
@@ -234,11 +246,6 @@ def muoviCursoreIndietroDi(num_caratteri):
     else:
         #time.sleep(1)
         keyboard.type('__mb{}'.format(abs(num_caratteri)))
-
-# def salvaTex():
-#     if time.time() - lastSaveTime['last_save_time'] > 1: #salvo solo se l'ultima volta ho salvato più di un secondo fa
-#         keyboard.type('__save')
-#         lastSaveTime['last_save_time'] = time.time()
 
 
 
