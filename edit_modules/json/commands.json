@@ -1,3 +1,3 @@
 {
-    "commands":["avanti","indietro","avanti _num_","indietro _num_","corrispondente"]
+    "commands":["avanti","indietro","avanti _num","indietro _num","corrispondente"]
 }

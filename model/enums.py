@@ -28,4 +28,6 @@ class ModuleMsg(Enum):
 class EditMsg(Enum):
     RETRY = 0 #il master deve riprovare ad inviare lo stesso token (eventualmente inviando prima a texstudio qualcosa)
     NEXT_TOKEN = 1 #token non appartenente a niente di accettabile. Skip
+    WAIT = 2 #a quel livello ha metchato qualcosa.. bisogna vedere se al livello successivo sarà la stessa cosa
+    COMMAND = 3 #se abbiamo tutte foglie, tipicamente una
     

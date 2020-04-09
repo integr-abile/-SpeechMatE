@@ -10,6 +10,7 @@ from collections import deque #è una coda iterabile che può fare anche da stac
 from model import enums
 from model.layer import Layer
 from model.enums import LayerMsg
+from model.enums import EditMsg
 from model.enums import Action
 from token_pre_processor import TokenPreProcessor
 from edit_modules.edit_util import convertCommandsToTree
@@ -45,6 +46,8 @@ layer = Layer()
 
 #app state for edit
 editStateManager = EditBuffer(editGraph)
+
+######################## MANAGE ANSWERS ############################################
 
 def manageLayerAnswer(layerAnswer):
     """
@@ -140,6 +143,18 @@ def manageLayerAnswer(layerAnswer):
             manageLayerAnswer(res)
 
 
+def manageEditAnswer(editAnswer):
+    print('EDIT ricevuto {}'.format(editAnswer))
+    if editAnswer[0] == EditMsg.RETRY:
+        pass    
+    elif editAnswer[0] == EditMsg.NEXT_TOKEN:
+        pass
+    elif editAnswer[0] == EditMsg.WAIT:
+        pass
+    elif editAnswer[0] == EditMsg.COMMAND:
+        pass
+
+
 """SERVER INTERFACE API"""
 
 @app.route('/editText',methods=['POST'])
@@ -148,7 +163,8 @@ def new_edit_text():
     #qua non è come la matematica. Finito il burst si resetta lo stato perchè assumo che un comando di editing venga detto tutto di un fiato
     burstTokens = last_burst.split()
     for idx,token in enumerate(burstTokens):
-        editStateManager.newToken(token,idx==len(burstTokens)-1)
+        res = editStateManager.newToken(token,idx==len(burstTokens)-1)
+        manageEditAnswer(res)
     return '',status.HTTP_200_OK
 
 @app.route('/mathtext',methods=['POST'])
