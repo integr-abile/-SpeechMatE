@@ -16,6 +16,7 @@ from token_pre_processor import TokenPreProcessor
 from edit_modules.edit_util import convertCommandsToTree
 from edit_modules.edit_buffer import EditBuffer
 import json
+import re
 import pdb #debug
 
 app = Flask(__name__)
@@ -143,16 +144,38 @@ def manageLayerAnswer(layerAnswer):
             manageLayerAnswer(res)
 
 
-def manageEditAnswer(editAnswer):
+def manageEditAnswer(editAnswer,curToken,isLastToken):
     print('EDIT ricevuto {}'.format(editAnswer))
     if editAnswer[0] == EditMsg.RETRY:
-        pass    
+        if editAnswer[1] != "":
+            executeEditCommand(editAnswer[1])
+        res = editStateManager.newToken(curToken,isLastToken)    
+        manageEditAnswer(res,curToken,isLastToken)
     elif editAnswer[0] == EditMsg.NEXT_TOKEN:
         pass
     elif editAnswer[0] == EditMsg.WAIT:
         pass
     elif editAnswer[0] == EditMsg.COMMAND:
-        pass
+        executeEditCommand(editAnswer[1])
+
+
+def executeEditCommand(cmdStr):
+    time.sleep(2)
+    #faccio passare tutti i comandi in commands.json e li gestisco in stile regex
+    avanti_n_pattern = re.compile("avanti [0-9]+")
+    indietro_n_pattern = re.compile("indietro [0-9]+")
+    if avanti_n_pattern.match(cmdStr):
+        numChar = cmdStr.split()[1]
+        muoviCursoreAvantiDi(int(numChar))
+    elif cmdStr == "avanti":
+        muoviCursoreAvantiDi(1)
+    elif indietro_n_pattern.match(cmdStr):
+        numChar = cmdStr.split()[1]
+        muoviCursoreIndietroDi(int(numChar))
+    elif cmdStr == "indietro":
+        muoviCursoreIndietroDi(1)
+    elif cmdStr == "corrispondente":
+        pass #TODO
 
 
 """SERVER INTERFACE API"""
@@ -164,7 +187,7 @@ def new_edit_text():
     burstTokens = last_burst.split()
     for idx,token in enumerate(burstTokens):
         res = editStateManager.newToken(token,idx==len(burstTokens)-1)
-        manageEditAnswer(res)
+        manageEditAnswer(res,token,idx==len(burstTokens)-1)
     return '',status.HTTP_200_OK
 
 @app.route('/mathtext',methods=['POST'])
