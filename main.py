@@ -9,11 +9,9 @@ import it_core_news_sm
 from collections import deque #è una coda iterabile che può fare anche da stack. Di default append() opera left-to-right. sul get devo prendere il rightmost [-1]
 from model import enums
 from model.layer import Layer
-from model.enums import LayerMsg
-from model.enums import EditMsg
-from model.enums import Action
+from model.enums import LayerMsg,EditMsg,Action
 from token_pre_processor import TokenPreProcessor
-from edit_modules.edit_util import convertCommandsToTree
+from edit_modules.edit_util import convertCommandsToTree,convertCorrspondencesToString
 from edit_modules.edit_buffer import EditBuffer
 import json
 import re
@@ -171,7 +169,13 @@ def executeEditCommand(cmdStr):
     elif cmdStr == "indietro":
         muoviCursoreIndietroDi(1)
     elif cmdStr == "corrispondente":
-        pass #TODO
+        keyboard.type("__corr")
+    elif cmdStr == "cancella":
+        pass
+    elif cmdStr == "annulla":
+        pass
+    elif cmdStr == "ripristina":
+        pass
 
 
 

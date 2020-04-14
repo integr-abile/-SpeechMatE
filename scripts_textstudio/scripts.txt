@@ -1,0 +1,20 @@
+I seguenti script sono quelli da inserire in texstudio per una corretta comunicazione con questo software in modo che possa dare i giusti comandi
+
+Script per andare al simbolo corrispondente
+%SCRIPT
+
+prevChar = function() {return String.fromCharCode(cursor.previousChar())}
+
+if(prevChar() == "("){
+	editor.search(")",function(cur){
+		cursor.moveTo(cur.lineNumber(),cur.columnNumber());
+	});
+} else if(prevChar() == "["){
+	editor.search("]",function(cur){
+		cursor.moveTo(cur.lineNumber(),cur.columnNumber());
+	});
+} else if(prevChar == "{"){
+	editor.search("}",function(cur){
+		cursor.moveTo(cur.lineNumber(),cur.columnNumber());
+	});
+}
