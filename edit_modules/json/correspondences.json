@@ -1,0 +1,7 @@
+{
+    "correspondences":[
+        {"open_symbol":"(","close_symbol":")"},
+        {"open_symbol":"[","close_symbol":"]"},
+        {"open_symbol":"{","close_symbol":"}"}
+    ]
+}

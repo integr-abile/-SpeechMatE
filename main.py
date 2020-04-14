@@ -23,13 +23,7 @@ app = Flask(__name__)
 CORS(app) #di default CORS *
 nlp = it_core_news_sm.load()
 keyboard = Controller()
-#fetch resources
-with open('./util/word2num.json') as word2num_json:
-    word2numDict = json.load(word2num_json)
-with open('./util/derivata_word2num.json') as derivata_word2num_json:
-    derivataWord2numDict = json.load(derivata_word2num_json)
-with open('./edit_modules/json/commands.json') as commands_json:
-    editGraph = convertCommandsToTree(json.load(commands_json))
+
 
 #app state for math
 stack = deque()
@@ -42,10 +36,12 @@ lastTextSent = {'text':''} #tiene conto dell'ultimo testo inviato a texstudio
 numBurstTokens = {'length':-1}
 lastSaveTime = {'last_save_time':time.time()}
 layer = Layer()
-
+tokenPreProcessor = TokenPreProcessor()
 
 
 #app state for edit
+with open('./edit_modules/json/commands.json') as commands_json:
+    editGraph = convertCommandsToTree(json.load(commands_json))
 editStateManager = EditBuffer(editGraph)
 
 ######################## MANAGE ANSWERS ############################################
@@ -178,6 +174,8 @@ def executeEditCommand(cmdStr):
         pass #TODO
 
 
+
+############################################## SERVER INTERFACE #######################################
 """SERVER INTERFACE API"""
 
 @app.route('/editText',methods=['POST'])
@@ -190,28 +188,21 @@ def new_edit_text():
         manageEditAnswer(res,token,idx==len(burstTokens)-1)
     return '',status.HTTP_200_OK
 
+
+
+
+
 @app.route('/mathtext',methods=['POST'])
 def new_text():
     last_burst = request.json['text']
     curBurst['tokens'] = []
     doc = nlp(last_burst)
-    numBurstTokens['length'] = len(doc)
+    expandedDoc = tokenPreProcessor.expandBurstIfNeeded(doc)
+    numBurstTokens['length'] = len(expandedDoc)
     
-    for idx,token in enumerate(doc):
-        tokenText = ''
-        tokenPos = ''
-        ##############################poi dovrà andare nel TokenPreProcessor
-        
-        if token.text in word2numDict.keys(): #controllo esponenti
-            tokenText = word2numDict[token.text]
-            tokenPos = 'NUM'
-        elif token.text in derivataWord2numDict.keys(): #controllo derivata
-            tokenText = derivataWord2numDict[token.text]
-            tokenPos = 'ADJ'
-        else:
-            tokenText = token.text
-            tokenPos = token.pos_
-        ######################################
+    for idx,token in enumerate(expandedDoc):
+        tokenText = token['token']
+        tokenPos = token['pos']
         
         print('layer count: {}'.format(len(stack)))
 
@@ -244,7 +235,7 @@ def new_text():
             # else: #questo token mi fa restare su questo layer
             # newLayerIfNeeded()
             res = layer.handleRawText((tokenText,tokenPos),idx,numBurstTokens['length'])
-            #time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
+            time.sleep(2) #per debug. Per darmi tempo di switchare su texstudio
             manageLayerAnswer(res)
     return '',status.HTTP_200_OK
 
