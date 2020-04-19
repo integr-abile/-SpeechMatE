@@ -1,7 +1,6 @@
 from math_modules import algebra,analysis,basic_symbols,trigonometry,letters #genereremo dinamicamente i testi di questi import
 import os
-from model.enums import LayerMsg
-from model.enums import ModuleMsg
+from model.enums import LayerMsg,ModuleMsg,EditMsg
 from model.rule_touched_layer import RuleTouchedLayer
 from model.module_answer_pool import ModuleAnswersPool
 import concurrent.futures
@@ -9,6 +8,7 @@ from typing import Tuple
 from util.util import checkAllArrayElementsEquals
 from jsgf import PublicRule
 import pdb
+import copy
 
 
 
@@ -16,9 +16,15 @@ class Layer:
 
     def __init__(self):
         self.initAll()
-        
+
+    def undo():
+        pass
+
+    def snapshot():
+        pass
 
     def initAll(self):
+        self.savedState = {} #da popolare nel caso di snapshot() e ripristinare in caso di undo()
         self._answersPool = ModuleAnswersPool()
         self._allGrammars = []
         allNextRulesWords = [] #sarà una lista di dictionaryes contenente un dictionary per ogni grammatica (classe)
@@ -41,6 +47,7 @@ class Layer:
 
     #------------------------ CONTROLLI PRELIMINARI ---------------------------------------------
 
+        #gestione dei token speciali
         if text_pos[0] == 'fine':
             # pdb.set_trace()
             if len(self._leafRuleMatched) > 0: #se ho metchato delle foglie nel frattempo
@@ -53,6 +60,10 @@ class Layer:
                 self.initAll()
                 self._lastMsgTypeSent = LayerMsg.END_THIS_LAYER
                 return (LayerMsg.END_THIS_LAYER,None)
+        elif text_pos[0] == 'annulla':
+            return (EditMsg.COMMAND,"annulla")
+        elif text_pos[0] == 'ripristina':
+            return (EditMsg.COMMAND,"ripristina")
 
 
          #controllo parole di trigger, altrimenti redirect back come TEXT al server
