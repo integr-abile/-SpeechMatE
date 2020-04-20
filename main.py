@@ -52,7 +52,11 @@ def restorePreviousState():#undo
     print('ripristino stato precedente....')
     curState = copy.deepcopy(oldState)
     #restore del layer
-    #layer.undo()
+    wordsSinceLastLayerInit = layer.reset()
+    # pdb.set_trace()
+    for pastInfo in wordsSinceLastLayerInit[:-2]:
+        res = layer.handleRawText(pastInfo[0],pastInfo[1],pastInfo[2])
+        manageLayerAnswer(res,ignore_answers=True)
 
 
 
@@ -69,10 +73,13 @@ with open('./edit_modules/json/correspondences.json') as correspondences_json: #
 
 ######################## MANAGE ANSWERS ############################################
 
-def manageLayerAnswer(layerAnswer):
+def manageLayerAnswer(layerAnswer,ignore_answers=False):
     """
     Punto nel quale si svolgono effettivamente le azioni comunicando anche con texstudio
     """
+    if ignore_answers == True:
+        return
+    
     print('Il server ha ricevuto {}'.format(layerAnswer))
     if layerAnswer[0] == LayerMsg.WAIT:
         pass
@@ -273,8 +280,6 @@ def new_text():
         if tokenText != "annulla":
             # pdb.set_trace()
             oldState = copy.deepcopy(curState)
-            #TODO: smt like layer.snapshot() #per salvare il suo stato
-            # pdb.set_trace()
         
         if len(curState['stack'])>0:
             print('MAIN: prev layer trigger WORDS {}'.format(curState['stack'][-1]['triggerWords']))

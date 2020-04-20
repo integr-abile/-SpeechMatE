@@ -16,6 +16,7 @@ class LayerMsg(Enum):
     TEXT = 3 #ciò che arriva dai vari moduli è coerente e può essere inoltrato al srv, oppure è un testo da inviare "as is" perchè non triggera fin dal principio nessuna regola
     WAIT = 4 #quando uno o più moduli gli hanno risposto Wait o nessuna regola è stata metchata
     REWIND = 5 #chiede al server di ripartire da un punto più indietro del burst a somministrare al layer il burst corrente
+    ANNULLA = 6 #chiede di tornare allo stato precedente
 
 class ModuleMsg(Enum):
     TEXT = 0 #una regola metchata o più regole metchate che però scriverebbero la stessa cosa

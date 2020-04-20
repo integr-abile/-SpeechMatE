@@ -17,7 +17,7 @@ class PiuMeno(MathTopic):
         short_expansion.tag = "\pm"
         long_expansion = Literal("più o meno")
         long_expansion.tag = "\pm"
-        piuMenoRule = PublicRule("open_parenthesis",AlternativeSet(short_expansion,long_expansion))
+        piuMenoRule = PublicRule("plus_minus",AlternativeSet(short_expansion,long_expansion))
         #setattr section
         setattr(piuMenoRule,'node_type',NODE_TYPE.FOGLIA)
         setattr(piuMenoRule,'request_new_layer',False)

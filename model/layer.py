@@ -17,14 +17,15 @@ class Layer:
     def __init__(self):
         self.initAll()
 
-    def undo():
-        pass
+    def reset(self):
+        words = copy.deepcopy(self.tokenSinceLastInit)
+        self.initAll()
+        return words
+        
 
-    def snapshot():
-        pass
 
     def initAll(self):
-        self.savedState = {} #da popolare nel caso di snapshot() e ripristinare in caso di undo()
+        self.tokenSinceLastInit = []
         self._answersPool = ModuleAnswersPool()
         self._allGrammars = []
         allNextRulesWords = [] #sarà una lista di dictionaryes contenente un dictionary per ogni grammatica (classe)
@@ -47,6 +48,7 @@ class Layer:
 
     #------------------------ CONTROLLI PRELIMINARI ---------------------------------------------
 
+        self.tokenSinceLastInit.append((text_pos,idx,num_burst_tokens)) #mi salvo tutte le info che mi permettono di risimulare (undo)
         #gestione dei token speciali
         if text_pos[0] == 'fine':
             # pdb.set_trace()
@@ -62,8 +64,6 @@ class Layer:
                 return (LayerMsg.END_THIS_LAYER,None)
         elif text_pos[0] == 'annulla':
             return (EditMsg.COMMAND,"annulla")
-        elif text_pos[0] == 'ripristina':
-            return (EditMsg.COMMAND,"ripristina")
 
 
          #controllo parole di trigger, altrimenti redirect back come TEXT al server
