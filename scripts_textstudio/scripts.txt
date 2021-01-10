@@ -1,6 +1,8 @@
 I seguenti script sono quelli da inserire in texstudio per una corretta comunicazione con questo software in modo che possa dare i giusti comandi
 
 Script per andare al simbolo corrispondente
+Selezionare come tipo di macro "Script"
+
 %SCRIPT
 
 prevChar = function() {return String.fromCharCode(cursor.previousChar())}
@@ -18,3 +20,51 @@ if(prevChar() == "("){
 		cursor.moveTo(cur.lineNumber(),cur.columnNumber());
 	});
 }
+
+
+
+------------------------------- SCRIPT DI AUTOSAVE --------------
+Selezionare come tipo di macro "Script"
+
+%SCRIPT
+var interval = 500;//ms
+registerAsBackgroundScript("foo_script");
+setTimeout(foo,interval);
+
+function foo(){
+
+if(!app.completerIsVisible()){
+	app.fileSave();
+}
+
+setTimeout(foo,interval);
+}
+
+
+------------------ SCRIPT PER TORNARE INDIETRO DI n CARATTERI
+Selezionare come tipo di macro "Script", come comando di lancio "__mb[0-9]"
+
+%SCRIPT
+var triggerCmd = triggerMatches[0]
+var lastChar = triggerCmd.charAt(triggerCmd.length-1)
+var number = parseInt(lastChar)
+cursor.shift(-number)
+
+------------------ SCRIPT PER AVANTI DI n CARATTERI
+Selezionare come tipo di macro "Script", come comando di lancio "__mf[0-9]"
+
+%SCRIPT
+var triggerCmd = triggerMatches[0]
+var lastChar = triggerCmd.charAt(triggerCmd.length-1)
+var number = parseInt(lastChar)
+cursor.shift(number)
+
+
+---------------- SCRIPT PER SCRIVERE LA LETTERA GRECA ALFA -------------
+Selezionare come tipo di macro "Normale" con comando di lancio "__alfa"
+Nel "Contenuto LaTeX"
+
+\alpha
+
+
+
