@@ -6,7 +6,7 @@ Il server dell'ecosistema SpeechMatE trova il senso se a valle ci sono i moduli 
 
 Il diagramma di flusso del sistema comprensivo anche della parte client (vedi repository della [parte client](https://github.com/integr-abile/SpeechMatE_client)) è il seguente
 
-![diagramma di flusso ad alto livello del sistema SpeechMatE](/Users/mattiaducci/Desktop/Lavoro/torinoPolin/speechmate-pipeline_texstudio/srv_processing/imgs/DiagrammaAltoLivello.png)
+![diagramma di flusso ad alto livello del sistema SpeechMatE](imgs/DiagrammaAltoLivello.png)
 
 ## Funzionamento di base
 
