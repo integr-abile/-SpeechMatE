@@ -70,6 +70,15 @@ Per delle macro già implementate nel parser vedere la sottosezione "Scripts per
 
 Nota: Per permettere al compilatore (esterno a texstudio) di intercettare il momento nel quale il file .tex sul quale si sta lavorando è stato modificato, è necessario che per la prima volta lo si salvi con nome
 
+Per far sì che la compilazione vada a buon fine predisporre il file .tex con il `\begin{document}` e `\begin{math}`
+
+```latex
+\begin{document}
+  \begin{math}
+  \end{math}
+\end{document}
+```
+
 
 
 ## Latex compiler
