@@ -25,8 +25,9 @@ Il funzionamento di questo server, al di là della logica di parsing del testo r
 ### Uso
 
 La simulazione dell'input è proprio da immaginarsi come la pressione fisica dei tasti corrispondenti ai caratteri specificati sulla propria tastiera e l'ottica è quella di eseguire questo server in background con il programma di editing LaTeX (vedi sezione "LaTeX editor") in foreground con il cursore posizionato su un documento vuoto. Le simulazioni fatte, che da qui in poi chiamerò semplicemente *testi*, hanno un duplice scopo: essere scritte o attivare delle macro definite nell'ambiente LaTeX editor, nel nostro caso il **software Texstudio**, comunque spiegate nella sezione dedicata.
-
-Per eseguire il server eseguire su host locale lo script `start_server.sh` (assicurati di avere la porta 5000 disponibile e non già occupata da un altro processo.. tipo un altro server Flask). Se dà problemi all'avvio installare le dipendenze python presenti in `requirements.txt` -> `pip install -r requirements.txt`. 
+Prima di tutto creare un virtualenv basato su `python 3.8` altrimenti la versione di Spacy avrà delle incompatibilità. Ad esempio usando miniconda `conda create -n speechmate python=3.8` e attivarlo `conda activate speechmate`.
+Successivamente installare le dipendenze: `pip install -r requirements.txt`
+Per eseguire il server eseguire su host locale lo script `start_server.sh` (assicurati di avere la porta 5000 disponibile e non già occupata da un altro processo.. tipo un altro server Flask).
 
 ### Come orientarsi nel progetto
 
