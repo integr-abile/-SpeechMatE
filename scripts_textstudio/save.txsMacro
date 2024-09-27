@@ -1,0 +1,15 @@
+{
+    "abbrev": "",
+    "description": [
+        "salvataggio manuale"
+    ],
+    "formatVersion": 1,
+    "menu": "",
+    "name": "save",
+    "shortcut": "",
+    "tag": [
+        "%SCRIPT",
+        "app.fileSave()"
+    ],
+    "trigger": "__save"
+}

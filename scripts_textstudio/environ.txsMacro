@@ -1,0 +1,14 @@
+{
+    "abbrev": "",
+    "description": [
+        "crea un environment (prova Ambiente)"
+    ],
+    "formatVersion": 1,
+    "menu": "",
+    "name": "environ",
+    "shortcut": "",
+    "tag": [
+        "%itemize"
+    ],
+    "trigger": "_env"
+}

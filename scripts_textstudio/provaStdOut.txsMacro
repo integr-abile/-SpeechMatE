@@ -1,0 +1,15 @@
+{
+    "abbrev": "",
+    "description": [
+        ""
+    ],
+    "formatVersion": 1,
+    "menu": "",
+    "name": "provaStdOut",
+    "shortcut": "",
+    "tag": [
+        "%SCRIPT",
+        "debug(\"prova\");"
+    ],
+    "trigger": "_debug"
+}

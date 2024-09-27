@@ -1,0 +1,27 @@
+{
+    "abbrev": "",
+    "description": [
+        ""
+    ],
+    "formatVersion": 1,
+    "menu": "",
+    "name": "autosave",
+    "shortcut": "",
+    "tag": [
+        "%SCRIPT",
+        "var interval = 500;//ms",
+        "registerAsBackgroundScript(\"foo_script\");",
+        "setTimeout(foo,interval);",
+        "",
+        "function foo(){",
+        "",
+        "if(!app.completerIsVisible()){",
+        "\tapp.fileSave();",
+        "}",
+        "",
+        "setTimeout(foo,interval);",
+        "}",
+        ""
+    ],
+    "trigger": ""
+}

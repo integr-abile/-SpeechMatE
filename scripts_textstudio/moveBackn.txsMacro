@@ -1,0 +1,18 @@
+{
+    "abbrev": "",
+    "description": [
+        "indietro il cursore di n caratteri"
+    ],
+    "formatVersion": 1,
+    "menu": "",
+    "name": "moveBackn",
+    "shortcut": "",
+    "tag": [
+        "%SCRIPT",
+        "var triggerCmd = triggerMatches[0]",
+        "var lastChar = triggerCmd.charAt(triggerCmd.length-1)",
+        "var number = parseInt(lastChar)",
+        "cursor.shift(-number)"
+    ],
+    "trigger": "__mb[0-9]"
+}

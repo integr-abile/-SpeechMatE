@@ -1,0 +1,19 @@
+{
+    "abbrev": "",
+    "description": [
+        "avanti il cursore di n caratteri"
+    ],
+    "formatVersion": 1,
+    "menu": "",
+    "name": "moveForwardn",
+    "shortcut": "",
+    "tag": [
+        "%SCRIPT",
+        "var triggerCmd = triggerMatches[0]",
+        "var lastChar = triggerCmd.charAt(triggerCmd.length-1)",
+        "var number = parseInt(lastChar)",
+        "cursor.shift(number)",
+        ""
+    ],
+    "trigger": "__mf[0-9]"
+}
